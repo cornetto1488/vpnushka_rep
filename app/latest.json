@@ -1,0 +1,11 @@
+{
+  "version": "1.4.1",
+  "notes": "Поддержка прямо в приложении: пишите — ответ придёт сюда и уведомлением. Предупреждения о трафике на 80/95/100%.",
+  "pub_date": "2026-10-05T10:09:33Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093b3hKcVRhWDZGVm5wVEpKeEtzcWlta1lRcFovemkybFZNM1VETmVjZW9yc0RQVTdFanVKWFc3UkdRc3BqU3JGcm5GL25teXJMZDEzTi9mRmx1eUVFd3drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTk0NTc0CWZpbGU6VlBOVVNIS0FfMS40LjFfeDY0LXNldHVwLmV4ZQpVMWpZbWtKdEo1dnpDa0wyQitTZUdBcFRsUmZ1L1JxbUp2bDZyY0tpQWx0cUdGMXZKK3gvVVYzL3Jld3FGd2wvUUl4YmhKVHRyKy9VaG9UMTdEWHdBZz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v1.4.1/VPNUSHKA_1.4.1_x64-setup.exe"
+    }
+  }
+}
