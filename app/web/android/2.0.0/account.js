@@ -254,6 +254,7 @@ async function forgotPassword() {
 
 async function loggedIn(auth) {
   loginGen++;
+  if (typeof closeAuth === "function") closeAuth();
   el("acc-login-tg").disabled = false;
   await saveAccount({ access: auth.access_token, refresh: auth.refresh_token, user: auth.user || null });
   accMsg("acc-login-msg", "");
@@ -398,7 +399,7 @@ function paintHomeAccount() {
   const wdot = () => { el("win-acc-dot").className = "wdot" + (/warn|err/.test(dot.className) ? " " + dot.className.split(" ")[1] : ""); };
   if (!acc) {
     t.textContent = "Кабинет";
-    sub.textContent = "войдите через Telegram — баланс и продление здесь";
+    sub.textContent = "войдите в аккаунт — баланс и продление здесь";
     dot.className = "dot";
     wdot();
     if (typeof paintGuest === "function") paintGuest();

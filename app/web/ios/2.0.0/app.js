@@ -432,8 +432,8 @@ async function toggleConnection() {
   }
   if (guestExpired()) await endGuest("время временного доступа вышло");   // guest.js
   if (!profile || !profile.sub) {
-    show("account");
-    say("войдите в кабинет — подписка подключится сама (или вставьте ссылку в настройках)", true);
+    authLaterThisRun = false;
+    openAuth();                       // auth.js: почта, Telegram или 20 минут бесплатно
     return;
   }
   const guest = guestActive();
@@ -1943,13 +1943,11 @@ if (listen) {
   if (p && p.sub) {
     await loadServers();
     loadSubInfo();
-  } else {
-    // сразу главный экран: карточка «Подключите Telegram» на нём висит сама,
-    // пока человек не войдёт (guest.js)
-    say("войдите через Telegram, чтобы начать");
   }
   const link = await invoke("take_deep_link").catch(() => null);
   if (link) await importLink(link);
+  // ни аккаунта, ни подписки — сразу экран входа (auth.js); acc грузит account.js
+  setTimeout(() => maybeOpenAuth(), 300);
   await syncStatus();
   setInterval(syncStatus, 3000);
   // дата окончания подписки меняется (продлили) — и по ней напоминания

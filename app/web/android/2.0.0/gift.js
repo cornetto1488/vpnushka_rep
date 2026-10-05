@@ -23,7 +23,7 @@ function paintGift() {
   card.style.display = "";
   const go = el("gift-go"), sub = el("gift-sub");
   if (!acc) {
-    sub.textContent = "за установку приложения — войдите через Telegram, и неделя добавится · до 2 ноября";
+    sub.textContent = "за установку приложения — войдите в аккаунт, и неделя добавится · до 2 ноября";
     go.textContent = "Войти";
   } else if (accData.me && !accData.sub) {
     sub.textContent = "добавится к подписке — сначала оформите её или включите пробную · до 2 ноября";
@@ -37,7 +37,7 @@ function paintGift() {
 async function takeGift() {
   const go = el("gift-go"), msg = el("gift-msg");
   msg.textContent = ""; msg.className = "msg";
-  if (!acc) { loginTelegram(); return; }
+  if (!acc) { openAuth(); return; }
   go.disabled = true;
   try {
     await apiOk("POST", "/promocode/activate", { code: GIFT.code });

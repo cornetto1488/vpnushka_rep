@@ -26,13 +26,13 @@ const FAQ = [
   {
     q: "Как подключиться?", ico: "power", open: true,
     a: `<ol class="faq-steps">
-          <li><b>Войдите</b> в Кабинете — через Telegram или по почте.</li>
+          <li><b>Войдите</b> — по почте или через Telegram. Telegram не открывается — там же есть 20 минут бесплатно.</li>
           <li><b>Нажмите большую кнопку</b> на главной. Подписка подтянется сама.</li>
           <li>Готово — сверху загорится <b>«VPN включён»</b> и сервер, через который идёт трафик.</li>
         </ol>
         <p>Видео со звуком — на сайте, раздел «Как подключить».</p>`,
     img: "faq/connect.webp", tall: true,
-    act: [{ label: "Войти в Кабинет", go: "account" }, { label: "Видео на сайте", url: "https://vpnushka.lol/#howto" }],
+    act: [{ label: "Войти", auth: true }, { label: "Видео на сайте", url: "https://vpnushka.lol/#howto" }],
   },
   {
     q: "Сколько стоит?", ico: "ruble",
@@ -56,10 +56,10 @@ const FAQ = [
   },
   {
     q: "Можно войти без Telegram?", ico: "mail",
-    a: `<p>Да. В Кабинете выберите <b>«Почта»</b> → «Регистрация»: укажите почту и пароль, подтвердите адрес по ссылке
+    a: `<p>Да. На экране входа выберите <b>«Почта»</b> → «Регистрация»: укажите почту и пароль, подтвердите адрес по ссылке
         из письма — и войдите. Подписка и баланс привязываются к этому аккаунту.</p>
         <p>Забыли пароль — там же «Забыли пароль?», ссылка для сброса придёт на почту.</p>`,
-    act: [{ label: "Войти по почте", go: "account" }],
+    act: [{ label: "Войти по почте", auth: "mail" }],
   },
   {
     q: "Какой сервер выбрать?", ico: "globe",
@@ -146,6 +146,11 @@ const FAQ_ICO = {
 
 function faqAction(a) {
   if (a.tab) return supTab(a.tab);
+  if (a.auth) {
+    if (typeof acc !== "undefined" && acc) return show("account");
+    if (typeof a.auth === "string") setAuthMethod(a.auth);
+    return openAuth();
+  }
   if (a.go) return show(a.go);
   if (a.url) invoke("open_url", { url: a.url }).catch((e) => say(errText(e), true));
 }

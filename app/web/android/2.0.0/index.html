@@ -148,14 +148,14 @@
            20 минут через NL, где сервер пускает только Telegram и кабинет. -->
       <div id="guest-card" class="card guest" style="display:none">
         <div class="g-head">
-          <span class="g-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span>
+          <span class="g-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
           <span class="tx">
             <b id="guest-title">Не получается войти?</b>
             <span id="guest-sub" class="sub">20 минут бесплатно — чтобы войти в кабинет</span>
           </span>
           <b id="guest-left" class="g-left"></b>
         </div>
-        <button id="guest-login" class="btn tg wide">Войти через Telegram</button>
+        <button id="guest-login" class="btn primary wide">Войти в аккаунт</button>
         <button id="guest-go" class="btn wide">Временный доступ · 20 минут</button>
         <div id="guest-msg" class="msg"></div>
         <button id="guest-stop" class="linkbtn" style="display:none">Завершить временный доступ</button>
@@ -274,8 +274,8 @@
       </div>
 
       <div id="inv-out" class="card pad" style="display:none">
-        <p class="hint">Чтобы получить свою ссылку, войдите в кабинет через Telegram.</p>
-        <button id="inv-login" class="btn tg wide">Войти через Telegram</button>
+        <p class="hint">Чтобы получить свою ссылку, войдите в аккаунт — по почте или через Telegram.</p>
+        <button id="inv-login" class="btn primary wide">Войти в аккаунт</button>
       </div>
 
       <div id="inv-in" class="stack" style="display:none">
@@ -426,42 +426,61 @@
       <header class="vhead"><span class="eyebrow">Баланс и подписка</span><h1>Кабинет</h1></header>
 
       <!-- не вошёл -->
-      <div id="acc-out" class="stack">
-        <div class="card pad hero-action">
-          <div class="cap">Кабинет VPNUSHKA</div>
-          <div class="hint">Тот же аккаунт, что в боте @vpnushka_bot: баланс, подписка, пополнение
-            и продление. Войдите один раз — подписка подтянется сама.</div>
-          <button id="acc-login-tg" class="btn tg wide big">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>
-            Войти через Telegram
-          </button>
-          <div id="acc-login-msg" class="msg"></div>
-          <button id="acc-login-reopen" class="btn wide" style="display:none">Открыть Telegram ещё раз</button>
-          <button id="acc-guest" class="linkbtn" style="display:none">Не получается войти? Временный доступ на 20 минут</button>
+      <!-- не вошёл: один блок входа — и в Кабинете, и на экране входа после
+           соглашения (auth.js переносит его туда). Почта и Telegram — на равных. -->
+      <div id="acc-out" class="stack auth">
+        <div class="card pad auth-card">
+          <div class="auth-head">
+            <b>Вход в аккаунт</b>
+            <span class="hint">Один аккаунт на всех устройствах — тот же, что в боте и кабинете. Баланс и подписка подтянутся сами.</span>
+          </div>
+          <div class="auth-methods" id="auth-method">
+            <button data-auth="mail"><span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><b>Почта</b><small>логин и пароль</small></button>
+            <button data-auth="tg"><span class="am-ico tg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span><b>Telegram</b><small>через бота</small></button>
+          </div>
+
+          <div id="auth-pick" class="hint auth-pick">Пользовались ботом @vpnushka_bot — входите через <b>Telegram</b>, подписка уже там. Новый аккаунт без Telegram — через <b>почту</b>.</div>
+
+          <div id="auth-mail" class="auth-pane mail-card" hidden>
+            <div class="seg small" id="mail-mode">
+              <button data-mail="login" class="on">Вход</button>
+              <button data-mail="register">Регистрация</button>
+            </div>
+            <input id="acc-email" type="email" spellcheck="false" placeholder="почта" autocomplete="username" />
+            <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
+            <div id="mail-reg-extra" class="stack" hidden>
+              <input id="acc-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
+              <input id="acc-name" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
+              <div class="hint">Пароль — от 8 символов. Регистрируясь, вы принимаете <a href="#" id="mail-docs">правила сервиса</a>.</div>
+            </div>
+            <button id="acc-login-email" class="btn primary wide big">Войти</button>
+            <div id="mail-msg" class="msg"></div>
+            <div class="mail-links">
+              <button id="mail-forgot" class="linkbtn">Забыли пароль?</button>
+              <button id="mail-resend" class="linkbtn" style="display:none">Отправить письмо ещё раз</button>
+            </div>
+          </div>
+
+          <div id="auth-tg" class="auth-pane" hidden>
+            <div class="hint">Откроется бот @vpnushka_bot — нажмите в нём «Запустить», затем «Подтвердить вход». Приложение подхватит вход само.</div>
+            <button id="acc-login-tg" class="btn tg wide big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Войти через Telegram</button>
+            <div id="acc-login-msg" class="msg"></div>
+            <button id="acc-login-reopen" class="btn wide" style="display:none">Открыть Telegram ещё раз</button>
+          </div>
         </div>
-        <!-- почта: вход и регистрация без Telegram (кабинет Bedolaga /auth/email/*) -->
-        <div class="card pad mail-card" id="mail-card">
-          <div class="mail-head">
-            <span class="faq-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span>
-            <span><b>По почте</b><span class="hint">без Telegram — свой аккаунт с паролем</span></span>
+        <!-- временный доступ: Telegram в РФ без VPN не открывается — 20 минут, чтобы войти -->
+        <div id="auth-guest" class="card pad auth-guest" style="display:none">
+          <div class="ag-row">
+            <span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span>
+            <span class="tx"><b id="auth-guest-title">Telegram не открывается?</b>
+              <span id="auth-guest-sub" class="hint">Включим 20 минут бесплатно — Telegram заработает, войдите через него, и подписка подключится сама.</span></span>
+            <b id="auth-guest-left" class="g-left"></b>
           </div>
-          <div class="seg small" id="mail-mode">
-            <button data-mail="login" class="on">Вход</button>
-            <button data-mail="register">Регистрация</button>
-          </div>
-          <input id="acc-email" type="email" spellcheck="false" placeholder="почта" autocomplete="username" />
-          <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
-          <div id="mail-reg-extra" class="stack" hidden>
-            <input id="acc-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
-            <input id="acc-name" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
-            <div class="hint">Пароль — от 8 символов. Регистрируясь, вы принимаете <a href="#" id="mail-docs">правила сервиса</a>.</div>
-          </div>
-          <button id="acc-login-email" class="btn primary wide">Войти</button>
-          <div id="mail-msg" class="msg"></div>
-          <div class="mail-links">
-            <button id="mail-forgot" class="linkbtn">Забыли пароль?</button>
-            <button id="mail-resend" class="linkbtn" style="display:none">Отправить письмо ещё раз</button>
-          </div>
+          <button id="acc-guest" class="btn wide">Включить 20 минут бесплатно</button>
+          <div id="auth-guest-msg" class="msg"></div>
+        </div>
+        <div class="auth-alt">
+          <button id="auth-have-sub" class="linkbtn">У меня есть ссылка подписки</button>
         </div>
       </div>
 
@@ -889,6 +908,24 @@
   <div id="toast" class="toast"></div>
   <!-- Согласие с документами: при первом запуске и при новой редакции.
        «Принимаю» включается, только когда текст прочитан до конца. -->
+  <!-- экран входа: после соглашения, пока нет ни аккаунта, ни подписки (auth.js) -->
+  <div id="auth-gate" class="auth-gate" style="display:none">
+    <div class="ag-bg"><i></i></div>
+    <div class="ag-scroll">
+      <div class="ag-top">
+        <img src="brand.png" alt="" class="ag-mark" />
+        <span class="eyebrow">Добро пожаловать</span>
+        <h1 class="ag-title">Вход в <em>ВПНушку</em></h1>
+        <p class="ag-sub">Войдите удобным способом — подписка подключится сама, а нажать останется одну кнопку.</p>
+      </div>
+      <div id="auth-slot"></div>
+      <div id="ag-side" class="ag-side">
+        <div id="ag-guest-slot"></div>
+        <button id="auth-later" class="linkbtn ag-later">Войду позже</button>
+      </div>
+    </div>
+  </div>
+
   <div id="consent" class="consent" style="display:none">
     <div class="c-head">
       <b>Прежде чем начать</b>
@@ -915,6 +952,7 @@
   <script src="account.js"></script>
   <script src="gift.js"></script>
   <script src="guest.js"></script>
+  <script src="auth.js"></script>
   <script src="news.js"></script>
   <script src="invite.js"></script>
   <script src="support.js"></script>

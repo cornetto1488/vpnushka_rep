@@ -182,7 +182,7 @@ on(el("inv-share"), "click", () => {
   const link = invLink();
   if (link && navigator.share) navigator.share({ title: "ВПНушка", text: invText(), url: link }).catch(() => {});
 });
-on(el("inv-login"), "click", () => loginTelegram());
+on(el("inv-login"), "click", () => openAuth());
 
 // вошли/вышли из кабинета — карточки и экран вслед
 {
