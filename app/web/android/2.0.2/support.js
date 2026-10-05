@@ -8,6 +8,8 @@
 // раз в 5 с, пока раздел открыт, и раз в 1,5 мин в фоне, пока тикет открыт;
 // о новом ответе — системное уведомление и точка на кнопке «Поддержка».
 // Без входа в кабинет — только кнопка Telegram @vpnushka_manager.
+// С 2.0.0: вкладки «Вопросы · Тарифы · Чат» (faq.js), кнопка в шапке окна и
+// журнал подключения отдельным файлом (/media/upload → document в тикете).
 //
 // Грузится после app.js (el, on, show, view, prefs, savePrefs, invoke, say)
 // и account.js (acc, accData, apiOk, ddmmyyyy, errText).
@@ -52,7 +54,8 @@ function renderSupport(pending) {
     }
     b.append(document.createTextNode(supVisible(m.message_text) || (m.has_media ? "[вложение — откройте в боте]" : "")));
     const t = document.createElement("time");
-    t.textContent = m.pending ? "отправляю…" : supTime(m.created_at);
+    t.textContent = (m.pending ? "отправляю…" : supTime(m.created_at))
+      + (m.has_media && !m.is_from_admin && m.media_type === "document" ? " · 📎 журнал приложен" : "");
     b.append(t);
     list.append(b);
   }
@@ -67,11 +70,28 @@ function renderSupport(pending) {
     }
   }
   const pane = el("view-support");
-  if (pane) pane.scrollTop = pane.scrollHeight;
+  if (pane && supTabNow === "chat") pane.scrollTop = pane.scrollHeight;
 }
 
+const supUnread = () => supLastAdmin(supTicket) > (prefs.supportSeen || 0);
+
 function paintSupportDot() {
-  el("sup-dot").style.display = supLastAdmin(supTicket) > (prefs.supportSeen || 0) ? "" : "none";
+  const on = supUnread() ? "" : "none";
+  for (const id of ["sup-dot", "sup-dot-tb", "sup-dot-tab"]) if (el(id)) el(id).style.display = on;
+}
+
+let supTabNow = "faq";
+function supTab(name) {
+  supTabNow = name;
+  for (const b of document.querySelectorAll("#sup-tabs [data-sup]")) b.classList.toggle("on", b.dataset.sup === name);
+  for (const n of ["faq", "prices", "chat"]) el("sup-" + n).hidden = n !== name;
+  if (name === "chat") {
+    renderSupport();
+    if (supTicket) savePrefs({ supportSeen: supLastAdmin(supTicket) });
+    paintSupportDot();
+  }
+  const pane = el("view-support");
+  if (pane) pane.scrollTop = name === "chat" ? pane.scrollHeight : 0;
 }
 
 // Самый свежий тикет: незакрытый, если есть, иначе последний закрытый (чтобы
@@ -91,7 +111,7 @@ async function supPoll(background) {
     const t = supTicket && supOpen() ? (supTicket = await apiOk("GET", "/tickets/" + supTicket.id)) : await supLoad();
     if (!t) return;
     const fresh = (t.messages || []).filter((m) => m.is_from_admin && m.id > before);
-    if (view === "support") {
+    if (view === "support" && supTabNow === "chat") {
       renderSupport();
       savePrefs({ supportSeen: supLastAdmin(t) });
     } else if (prefs.supportNotified == null) {
@@ -117,9 +137,12 @@ function supSchedule() {
 // вызывает show() из app.js при каждой смене раздела
 function supportViewChanged(v) {
   if (v === "support") {
-    renderSupport();
-    if (supTicket) savePrefs({ supportSeen: supLastAdmin(supTicket) });
-    paintSupportDot();
+    // журнал файлом умеет нативная часть с 2.0.0 — у старой остаётся хвост в тексте
+    const fileLog = nativeAtLeast("2.0.0");
+    el("sup-log-row").style.display = fileLog ? "" : "none";
+    el("sup-diag-sub").textContent = fileLog ? "версия, система, сервер и подписка — текстом в сообщении"
+      : "версия, система, сервер и последние строки журнала — так быстрее разобраться";
+    supTab(supUnread() ? "chat" : supTabNow);   // новый ответ — сразу в переписку
     supPoll(false);
   }
   supSchedule();
@@ -139,10 +162,27 @@ async function supDiag() {
   return { head: lines.join("\n"), log: log.slice(-40).map((l) => (l.length > 160 ? l.slice(0, 160) + "…" : l)) };
 }
 
+// Журнал файлом: шапка сведений + весь журнал этого запуска (до 2 МБ — лимит
+// бота 10 МБ, а поддержке хватит и хвоста). → {media_type, media_file_id} или null.
+async function supLogFile() {
+  if (!(el("sup-log-row").style.display !== "none" && el("sup-log").checked)) return null;
+  const d = await supDiag();
+  let log = [];
+  try { log = await invoke("engine_log"); } catch (_) {}
+  let text = "ВПНушка — журнал подключения\n" + new Date().toISOString() + "\n" + d.head + "\n\n" + log.join("\n");
+  if (text.length > 2e6) text = text.slice(0, 2000) + "\n…\n" + text.slice(-1.9e6);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const r = await apiOk("POST", "/media/upload", null,
+    { fields: { media_type: "document" }, filename: "vpnushka-log-" + stamp + ".txt", text });
+  return r && r.file_id ? { media_type: "document", media_file_id: r.file_id } : null;
+}
+
 // Текст + диагностика, не длиннее лимита бота: журнал обрезаем с начала.
-async function supCompose(text) {
+// withLog=false — журнал уже уходит файлом, в тексте только сведения.
+async function supCompose(text, withLog) {
   if (!el("sup-diag").checked) return text.slice(0, SUP_TEXT_MAX);
   const d = await supDiag();
+  if (withLog === false) d.log = [];
   let body = "";
   for (let n = d.log.length; n >= 0; n -= 5) {
     body = text + SUP_DIAG_MARK + d.head + (n ? "\nЖурнал:\n" + d.log.slice(-n).join("\n") : "");
@@ -166,22 +206,28 @@ async function supSend() {
   el("sup-status").textContent = "";
   renderSupport(text);
   try {
-    const message = await supCompose(text);
+    let media = null;
+    try { media = await supLogFile(); } catch (e) {
+      el("sup-status").textContent = "Журнал не приложился (" + errText(e) + ") — отправляю последние строки текстом.";
+    }
+    const message = await supCompose(text, !media);
+    const body = media ? { message, ...media } : { message };
     if (!supOpen()) await supLoad().catch(() => {});   // вдруг тикет открыт из бота
     if (supOpen()) {
-      await apiOk("POST", "/tickets/" + supTicket.id + "/messages", { message });
+      await apiOk("POST", "/tickets/" + supTicket.id + "/messages", body);
     } else {
       try {
-        await apiOk("POST", "/tickets", { title: supTitle(text), message });
+        await apiOk("POST", "/tickets", { title: supTitle(text), ...body });
       } catch (e) {
         if (e.status !== 409) throw e;                 // уже есть открытый — пишем в него
         await supLoad();
-        await apiOk("POST", "/tickets/" + supTicket.id + "/messages", { message });
+        await apiOk("POST", "/tickets/" + supTicket.id + "/messages", body);
       }
     }
     box.value = "";
     await supLoad();
     el("sup-diag").checked = false;   // журнал нужен один раз на обращение
+    el("sup-log").checked = false;
     el("sup-status").textContent = "Отправлено. Ответ придёт сюда, в бот и уведомлением.";
   } catch (e) {
     el("sup-status").textContent = "Не отправилось: " + errText(e) + ". Можно написать в Telegram — кнопка ниже.";
@@ -199,6 +245,9 @@ on(el("sup-text"), "keydown", (e) => {
 });
 on(el("sup-tg"), "click", () => invoke("open_url", { url: SUP_TG }).catch((e) => say(errText(e), true)));
 on(el("sup-login-btn"), "click", () => show("account"));
+document.querySelectorAll("#sup-tabs [data-sup]").forEach((b) => on(b, "click", () => supTab(b.dataset.sup)));
+document.querySelectorAll("[data-sup-go]").forEach((b) => on(b, "click", () => supTab(b.dataset.supGo)));
+document.querySelectorAll("[data-sup-go-view]").forEach((b) => on(b, "click", () => show(b.dataset.supGoView)));
 
 (async () => {
   for (let i = 0; i < 50 && !(prefs && Object.keys(prefs).length); i++) {

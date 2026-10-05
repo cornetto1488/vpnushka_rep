@@ -207,10 +207,15 @@ on(el("win-close"), "click", async () => {
   if (prefs.trayOnClose === false) { await invoke("quit_app").catch(() => {}); return; }
   invoke("hide_window").catch(() => {});
 });
-on(el("win-theme"), "click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true));
+// В шапке — поддержка (2.0.0); тема переехала в Настройки → Оформление.
+on(el("win-support"), "click", () => show("support"));
+document.querySelectorAll("[data-theme-pick]").forEach((b) =>
+  on(b, "click", () => setTheme(b.dataset.themePick, true)));
 
 function setTheme(theme, save) {
   document.documentElement.dataset.theme = theme === "dark" ? "dark" : "light";
+  document.querySelectorAll("[data-theme-pick]").forEach((b) =>
+    b.classList.toggle("on", b.dataset.themePick === document.documentElement.dataset.theme));
   if (save) savePrefs({ theme: document.documentElement.dataset.theme });
 }
 
@@ -279,6 +284,84 @@ async function resolveExit() {
 }
 setInterval(() => { if (state === "on") resolveExit(); }, 15000);
 
+/* ── проверка связи через выбранный выход (2.0.0) ─────────────────────────
+   «Подключено» — только когда через сервер реально проходит запрос. Раньше
+   хватало поднятого Clash API: при автовыборе группа ещё не нашла живой
+   сервер, а приложение уже писало «подключено». Теперь: замер задержки через
+   Clash API (группе — /group/…/delay, она заодно перевыберет лучший), пока
+   не ответит; не ответил за 40 с — туннель держим, но честно пишем «нет
+   связи с сервером» и перепроверяем в фоне. */
+const PROBE_URL = "https://www.gstatic.com/generate_204";
+let linkBad = false;          // туннель поднят, но выход не отвечает
+let probeMsg = "";            // что сейчас делаем, пока подключаемся
+let probeFails = 0;
+
+async function probeExit() {
+  let name = current, isGroup = false;
+  const q = "?url=" + encodeURIComponent(PROBE_URL) + "&timeout=5000";
+  try {
+    for (let i = 0; i < 4 && name; i++) {
+      const p = await clash("/proxies/" + encodeURIComponent(name));
+      if (!p || !["URLTest", "Selector", "Fallback", "urltest", "selector"].includes(p.type)) break;
+      if (/urltest|fallback/i.test(p.type)) {
+        isGroup = true;
+        // замер всей группы: она перевыберет живой сервер, если текущий умер
+        await clash("/group/" + encodeURIComponent(name) + "/delay" + q).catch(() => null);
+        const g = await clash("/proxies/" + encodeURIComponent(name)).catch(() => p);
+        name = (g && g.now) || p.now;
+        continue;
+      }
+      name = p.now;
+    }
+    if (!name) return { ok: false, isGroup };
+    const r = await clash("/proxies/" + encodeURIComponent(name) + "/delay" + q);
+    return { ok: !!(r && r.delay > 0), delay: r && r.delay, name, isGroup };
+  } catch (_) {
+    return { ok: false, name, isGroup };
+  }
+}
+
+// Ждём рабочий выход до limitMs; true — нашёлся.
+async function waitForExit(limitMs) {
+  const until = Date.now() + limitMs;
+  for (let n = 0; Date.now() < until; n++) {
+    const r = await probeExit();
+    if (r.ok) return true;
+    probeMsg = r.isGroup ? "ищу рабочий сервер…" : "сервер не отвечает, пробую ещё…";
+    tick();
+    if ((await invoke("get_status").catch(() => "on")) === "off") return false;
+    await new Promise((res) => setTimeout(res, n < 3 ? 1500 : 3000));
+  }
+  return false;
+}
+
+function setLinkBad(bad) {
+  if (linkBad === bad) return;
+  linkBad = bad;
+  probeFails = 0;
+  const tb = el("tb-state");
+  if (state === "on") {
+    tb.textContent = bad ? "нет связи с сервером" : "подключено";
+    tb.className = "tb-state show" + (bad ? " warn" : " on");
+  }
+  document.documentElement.classList.toggle("link-bad", bad && state === "on");
+  if (bad) say("сервер не отвечает — подождите или выберите другой в «Серверах»", true);
+  tick();
+}
+
+// Пока подключено — раз в 45 с (при проблеме — раз в 10 с) проверяем связь.
+let probeBusy = false;
+setInterval(async () => {
+  if (state !== "on" || probeBusy) return;
+  if (!linkBad && Date.now() % 45000 >= 10000) return;
+  probeBusy = true;
+  try {
+    const r = await probeExit();
+    if (r.ok) { setLinkBad(false); resolveExit(); }
+    else if (++probeFails >= 2) setLinkBad(true);
+  } finally { probeBusy = false; }
+}, 10000);
+
 function setState(s) {
   state = s;
   document.documentElement.dataset.conn = s;
@@ -291,9 +374,11 @@ function setState(s) {
   el("power").title =
     s === "on" ? "Нажмите, чтобы отключиться" : s === "connecting" ? "" : "Нажмите, чтобы подключиться";
   el("canvas").className = "canvas " + s;
+  if (s !== "on") { linkBad = false; document.documentElement.classList.remove("link-bad"); }
+  if (s !== "connecting") probeMsg = "";
   const tb = el("tb-state");
-  tb.textContent = s === "on" ? "подключено" : s === "connecting" ? "подключение" : "";
-  tb.className = "tb-state" + (s === "off" ? "" : " show") + (s === "on" ? " on" : "");
+  tb.textContent = s === "on" ? (linkBad ? "нет связи с сервером" : "подключено") : s === "connecting" ? "подключение" : "";
+  tb.className = "tb-state" + (s === "off" ? "" : " show") + (s === "on" ? (linkBad ? " warn" : " on") : "");
   if (s === "on") {
     if (!since) since = Date.now();
   } else {
@@ -321,9 +406,10 @@ function tick() {
     const mm = String(Math.floor((t % 3600) / 60)).padStart(2, "0");
     const ss = String(t % 60).padStart(2, "0");
     el("m-time").textContent = (hh ? hh + ":" : "") + mm + ":" + ss;
-    sub.textContent = liveExitAuto ? "автовыбор: самый быстрый сейчас" : "сервер выбран вручную";
+    sub.textContent = linkBad ? "сервер не отвечает — подождите или выберите другой"
+      : liveExitAuto ? "автовыбор: самый быстрый сейчас" : "сервер выбран вручную";
   } else if (state === "connecting") {
-    sub.textContent = "пара секунд";
+    sub.textContent = probeMsg || "пара секунд";
     el("m-time").textContent = "00:00";
   } else {
     el("m-time").textContent = "00:00";
@@ -346,8 +432,8 @@ async function toggleConnection() {
   }
   if (guestExpired()) await endGuest("время временного доступа вышло");   // guest.js
   if (!profile || !profile.sub) {
-    show("account");
-    say("войдите в кабинет — подписка подключится сама (или вставьте ссылку в настройках)", true);
+    authLaterThisRun = false;
+    openAuth();                       // auth.js: почта, Telegram или 20 минут бесплатно
     return;
   }
   const guest = guestActive();
@@ -371,7 +457,6 @@ async function toggleConnection() {
       throw new Error(why || "не удалось подключиться — подробности в журнале (Настройки → Журнал)");
     }
     const want = guest ? null : current;
-    setState("on");
     if (guest) await clash("/configs", { method: "PATCH", headers: { "content-type": "application/json" },
                                          body: JSON.stringify({ mode: "Rule" }) }).catch(() => {});
     else await applyRouteMode(prefs.routeMode || "Global", true);
@@ -386,6 +471,15 @@ async function toggleConnection() {
         paintCurrent(); renderList();
       } catch (_) {}
     }
+    // «подключено» — только когда через выход прошёл запрос (канал
+    // «Мобильные операторы» поднимается дольше — ему больше времени)
+    probeMsg = "проверяю сервер…"; tick();
+    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    if ((await invoke("get_status").catch(() => "on")) === "off") throw new Error(
+      (await invoke("last_error").catch(() => "")) || "соединение оборвалось при подключении");
+    linkBad = !ok;
+    setState("on");
+    if (!ok) { linkBad = false; setLinkBad(true); }
     showEgress();
   } catch (e) {
     setState("off");
@@ -1445,7 +1539,56 @@ on(el("save-sub"), "click", async () => {
     loadSubInfo();
   } catch (e) { say(errText(e), true); }
 });
-on(el("sub-refresh"), "click", async () => { await loadServers(); await loadSubInfo(); say("обновлено"); });
+on(el("sub-refresh"), "click", async () => { await subAutoUpdate(true); say("обновлено"); });
+
+/* ── автообновление подписки (2.0.0): по умолчанию раз в час ───────────────
+   Выключен VPN — новый список сразу на экране. Включён — соединение не рвём:
+   новые серверы применятся при следующем подключении (и скажем об этом). */
+const subAutoMin = () => (prefs.subAuto == null ? 60 : +prefs.subAuto);
+let subAutoBusy = false;
+
+function paintSubAuto() {
+  const s = el("sub-auto");
+  if (s) s.value = String(subAutoMin());
+  const at = el("sub-auto-at");
+  if (at) at.textContent = prefs.subUpdatedAt
+    ? "обновлено " + new Date(prefs.subUpdatedAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
+    : "список серверов, трафик и срок подписки";
+}
+
+async function subAutoUpdate(manual) {
+  if (subAutoBusy || state === "connecting" || !profile || !profile.sub) return;
+  subAutoBusy = true;
+  try {
+    if (state === "on") {
+      const live = servers.map((x) => x.name);
+      const r = await loadInfo();
+      const names = (r && r.servers) || [];
+      if (names.length) {
+        rememberList(names, r.default);
+        const changed = names.length !== live.length || names.some((n) => !live.includes(n));
+        if (changed) say("подписка обновилась — новые серверы появятся после переподключения");
+      }
+    } else {
+      await loadServers();
+    }
+    await savePrefs({ subUpdatedAt: Date.now() });
+    if (manual || view === "more") loadSubInfo().catch(() => {});
+  } catch (_) { /* нет сети — попробуем в следующий раз */ }
+  finally { subAutoBusy = false; paintSubAuto(); }
+}
+
+on(el("sub-auto"), "change", async () => {
+  await savePrefs({ subAuto: +el("sub-auto").value });
+  paintSubAuto();
+  say(+el("sub-auto").value ? "подписка будет обновляться " + el("sub-auto").selectedOptions[0].textContent : "автообновление подписки выключено");
+});
+
+setInterval(() => {
+  const m = subAutoMin();
+  if (!m || !prefs || !profile || !profile.sub) return;
+  if (Date.now() - (prefs.subUpdatedAt || 0) >= m * 60000) subAutoUpdate(false);
+}, 60000);
 on(el("sub-open"), "click", () => {
   if (!profile || !profile.sub) { say("подписка не задана", true); return; }
   invoke("open_url", { url: profile.sub }).catch((e) => say(errText(e), true));
@@ -1512,6 +1655,7 @@ on(el("log-refresh"), "click", loadLog);
 on(el("log-clear"), "click", async () => { await invoke("clear_log").catch(() => {}); loadLog(); });
 on(el("log-folder"), "click", () => invoke("open_data_dir").catch((e) => say(errText(e), true)));
 on(el("support"), "click", () => show("support"));
+on(el("support-about"), "click", () => show("support"));
 on(el("quit"), "click", () => invoke("quit_app").catch(() => {}));
 
 
@@ -1716,7 +1860,18 @@ async function syncStatus() {
   if (state === "connecting") return;
   let s = "off";
   try { s = await invoke("get_status"); } catch (_) {}
-  if (s === "on" && state !== "on") { setState("on"); await loadServers(); showEgress(); }
+  if (s === "on" && state !== "on") {
+    // движок подняли не кнопкой (автозапуск, плитка, iOS On Demand) — тоже
+    // сначала убеждаемся, что выход отвечает, и только потом «подключено»
+    setState("connecting");
+    await loadServers();
+    probeMsg = "проверяю сервер…"; tick();
+    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    if ((await invoke("get_status").catch(() => "off")) === "off") { setState("off"); return; }
+    setState("on");
+    if (!ok) setLinkBad(true);
+    showEgress();
+  }
   if (s === "off" && state === "on") {
     setState("off");
     await loadServers();
@@ -1743,6 +1898,7 @@ if (listen) {
   try { prefs = await invoke("get_prefs"); } catch (_) { prefs = {}; }
   try { tweaks = await invoke("get_tweaks"); } catch (_) { tweaks = {}; }
   setTheme(prefs.theme || "dark");
+  paintSubAuto();
   wireConsent();
   await policyGate();             // consent.js: без согласия с документами дальше не идём
   show("home");
@@ -1787,13 +1943,11 @@ if (listen) {
   if (p && p.sub) {
     await loadServers();
     loadSubInfo();
-  } else {
-    // сразу главный экран: карточка «Подключите Telegram» на нём висит сама,
-    // пока человек не войдёт (guest.js)
-    say("войдите через Telegram, чтобы начать");
   }
   const link = await invoke("take_deep_link").catch(() => null);
   if (link) await importLink(link);
+  // ни аккаунта, ни подписки — сразу экран входа (auth.js); acc грузит account.js
+  setTimeout(() => maybeOpenAuth(), 300);
   await syncStatus();
   setInterval(syncStatus, 3000);
   // дата окончания подписки меняется (продлили) — и по ней напоминания

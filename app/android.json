@@ -1,7 +1,7 @@
 {
-  "version": "2.0.1",
-  "notes": "Исправлена регистрация по почте на экране входа.",
-  "pub_date": "2026-10-05T15:01:32Z",
-  "sha256": "1e92d777519014b56019b5614b5a3dde2eeb592498dd1e2a53293cb0eb34218d",
-  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.1/VPNUSHKA_2.0.1_android.apk"
+  "version": "2.0.2",
+  "notes": "Способы входа: привяжите почту к аккаунту Telegram (Кабинет → Способы входа) — один аккаунт, вход и через Telegram, и по почте.",
+  "pub_date": "2026-10-05T17:15:12Z",
+  "sha256": "4cb4e137b0b923449c11cc0ec418bab2d6de1a9fecd3e320184e893926d03ef6",
+  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.2/VPNUSHKA_2.0.2_android.apk"
 }

@@ -25,8 +25,9 @@
     <span class="grow"></span>
     <button id="win-acc" class="wbtn legacy" title="Кабинет" tabindex="-1"></button>
     <button id="win-more" class="wbtn legacy" title="Настройки" tabindex="-1"></button>
-    <button id="win-theme" class="wbtn" title="Светлая или тёмная тема">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></svg>
+    <button id="win-support" class="wbtn" title="Поддержка и частые вопросы">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg>
+      <span id="sup-dot-tb" class="tb-dot" style="display:none"></span>
     </button>
     <button id="win-min" class="wbtn" title="Свернуть">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>
@@ -148,14 +149,14 @@
            20 минут через NL, где сервер пускает только Telegram и кабинет. -->
       <div id="guest-card" class="card guest" style="display:none">
         <div class="g-head">
-          <span class="g-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span>
+          <span class="g-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
           <span class="tx">
             <b id="guest-title">Не получается войти?</b>
             <span id="guest-sub" class="sub">20 минут бесплатно — чтобы войти в кабинет</span>
           </span>
           <b id="guest-left" class="g-left"></b>
         </div>
-        <button id="guest-login" class="btn tg wide">Войти через Telegram</button>
+        <button id="guest-login" class="btn primary wide">Войти в аккаунт</button>
         <button id="guest-go" class="btn wide">Временный доступ · 20 минут</button>
         <div id="guest-msg" class="msg"></div>
         <button id="guest-stop" class="linkbtn" style="display:none">Завершить временный доступ</button>
@@ -198,6 +199,45 @@
     <!-- ── ПОДДЕРЖКА ──────────────────────────────────────────────────────── -->
     <section id="view-support" class="view">
       <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Отвечаем сами, обычно в течение часа</span><h1>Поддержка</h1></header>
+      <div class="seg sup-tabs" id="sup-tabs">
+        <button data-sup="faq" class="on">Вопросы</button>
+        <button data-sup="prices">Тарифы</button>
+        <button data-sup="chat">Чат<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
+      </div>
+
+      <!-- частые вопросы: содержимое в faq.js -->
+      <div id="sup-faq" class="sup-pane">
+        <div id="faq-list" class="faq-list"></div>
+        <div class="card pad faq-more">
+          <b>Не нашли ответ?</b>
+          <span class="hint">Напишите нам — приложим сведения о подключении, чтобы разобраться быстрее.</span>
+          <button class="btn primary wide" data-sup-go="chat">Написать в поддержку</button>
+        </div>
+      </div>
+
+      <!-- тарифы: таблица считается в faq.js по формуле бота -->
+      <div id="sup-prices" class="sup-pane" hidden>
+        <div class="card price-hero">
+          <span class="eyebrow">Как считается</span>
+          <div class="price-formula">
+            <span class="pf-box"><b>75 ₽</b><small>месяц, 1 устройство</small></span>
+            <span class="pf-op">+</span>
+            <span class="pf-box"><b>30 ₽</b><small>каждое ещё в месяц</small></span>
+            <span class="pf-op">=</span>
+            <span class="pf-box hot"><b>105 ₽</b><small>за 2 устройства</small></span>
+          </div>
+          <div class="hint">Чем дольше период — тем дешевле месяц: до −17% за год. Трафик 2 ТБ в месяц, без скрытых платежей.</div>
+        </div>
+        <div class="price-devrow"><span class="label">Устройств</span><div class="seg small" id="price-dev"></div></div>
+        <div id="price-grid" class="price-grid"></div>
+        <div class="card pad price-pay">
+          <b>Как оплатить</b>
+          <span class="hint">Пополните баланс в Кабинете картой или криптовалютой, затем выберите период — подписка продлится сразу. Оплатить можно и в боте @vpnushka_bot.</span>
+          <button class="btn primary wide" data-sup-go-view="account">Открыть Кабинет</button>
+        </div>
+      </div>
+
+      <div id="sup-chat" class="sup-pane" hidden>
       <div id="sup-list" class="sup-list">
         <div id="sup-empty" class="hint">Опишите, что случилось: какой сервер, что не открывается, с какого времени. Ответ придёт сюда, в бот и уведомлением.</div>
       </div>
@@ -209,11 +249,14 @@
         <div id="sup-form-in" class="sup-form">
           <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в поддержку…"></textarea>
           <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
-            <span class="lbl"><b>Приложить сведения</b><span>версия, система, сервер и последние строки журнала — так быстрее разобраться</span></span></label>
+            <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и последние строки журнала — так быстрее разобраться</span></span></label>
+          <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
+            <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: весь журнал за этот запуск — что делал движок, какие были ошибки</span></span></label>
           <button id="sup-send" class="btn primary wide">Отправить</button>
           <div id="sup-status" class="hint"></div>
         </div>
         <button id="sup-tg" class="btn tg wide">Написать в Telegram @vpnushka_manager</button>
+      </div>
       </div>
     </section>
 
@@ -232,8 +275,8 @@
       </div>
 
       <div id="inv-out" class="card pad" style="display:none">
-        <p class="hint">Чтобы получить свою ссылку, войдите в кабинет через Telegram.</p>
-        <button id="inv-login" class="btn tg wide">Войти через Telegram</button>
+        <p class="hint">Чтобы получить свою ссылку, войдите в аккаунт — по почте или через Telegram.</p>
+        <button id="inv-login" class="btn primary wide">Войти в аккаунт</button>
       </div>
 
       <div id="inv-in" class="stack" style="display:none">
@@ -384,28 +427,62 @@
       <header class="vhead"><span class="eyebrow">Баланс и подписка</span><h1>Кабинет</h1></header>
 
       <!-- не вошёл -->
-      <div id="acc-out" class="stack">
-        <div class="card pad hero-action">
-          <div class="cap">Кабинет VPNUSHKA</div>
-          <div class="hint">Тот же аккаунт, что в боте @vpnushka_bot: баланс, подписка, пополнение
-            и продление. Войдите один раз — подписка подтянется сама.</div>
-          <button id="acc-login-tg" class="btn tg wide big">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>
-            Войти через Telegram
-          </button>
-          <div id="acc-login-msg" class="msg"></div>
-          <button id="acc-login-reopen" class="btn wide" style="display:none">Открыть Telegram ещё раз</button>
-          <button id="acc-guest" class="linkbtn" style="display:none">Не получается войти? Временный доступ на 20 минут</button>
-        </div>
-        <details class="card pad">
-          <summary>Войти по почте</summary>
-          <div class="stack">
-            <div class="hint">Если в кабинете вы регистрировались по почте, а не через Telegram.</div>
-            <input id="acc-email" type="text" spellcheck="false" placeholder="почта" autocomplete="username" />
-            <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
-            <button id="acc-login-email" class="btn primary wide">Войти</button>
+      <!-- не вошёл: один блок входа — и в Кабинете, и на экране входа после
+           соглашения (auth.js переносит его туда). Почта и Telegram — на равных. -->
+      <div id="acc-out" class="stack auth">
+        <div class="card pad auth-card">
+          <div class="auth-head">
+            <b>Вход в аккаунт</b>
+            <span class="hint">Один аккаунт на всех устройствах — тот же, что в боте и кабинете. Баланс и подписка подтянутся сами.</span>
           </div>
-        </details>
+          <div class="auth-methods" id="auth-method">
+            <button data-auth="mail"><span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><b>Почта</b><small>логин и пароль</small></button>
+            <button data-auth="tg"><span class="am-ico tg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span><b>Telegram</b><small>через бота</small></button>
+          </div>
+
+          <div id="auth-pick" class="hint auth-pick">Пользовались ботом @vpnushka_bot — входите через <b>Telegram</b>, подписка уже там. Новый аккаунт без Telegram — через <b>почту</b>.</div>
+
+          <div id="auth-mail" class="auth-pane mail-card" hidden>
+            <div class="seg small" id="mail-mode">
+              <button data-mail="login" class="on">Вход</button>
+              <button data-mail="register">Регистрация</button>
+            </div>
+            <input id="acc-email" type="email" spellcheck="false" placeholder="почта" autocomplete="username" />
+            <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
+            <div id="mail-reg-extra" class="stack" hidden>
+              <input id="acc-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
+              <input id="acc-regname" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
+              <div class="hint">Пароль — от 8 символов. Регистрируясь, вы принимаете <a href="#" id="mail-docs">правила сервиса</a>.</div>
+            </div>
+            <button id="acc-login-email" class="btn primary wide big">Войти</button>
+            <div id="mail-msg" class="msg"></div>
+            <div class="mail-links">
+              <button id="mail-forgot" class="linkbtn">Забыли пароль?</button>
+              <button id="mail-resend" class="linkbtn" style="display:none">Отправить письмо ещё раз</button>
+            </div>
+          </div>
+
+          <div id="auth-tg" class="auth-pane" hidden>
+            <div class="hint">Откроется бот @vpnushka_bot — нажмите в нём «Запустить», затем «Подтвердить вход». Приложение подхватит вход само.</div>
+            <button id="acc-login-tg" class="btn tg wide big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Войти через Telegram</button>
+            <div id="acc-login-msg" class="msg"></div>
+            <button id="acc-login-reopen" class="btn wide" style="display:none">Открыть Telegram ещё раз</button>
+          </div>
+        </div>
+        <!-- временный доступ: Telegram в РФ без VPN не открывается — 20 минут, чтобы войти -->
+        <div id="auth-guest" class="card pad auth-guest" style="display:none">
+          <div class="ag-row">
+            <span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span>
+            <span class="tx"><b id="auth-guest-title">Telegram не открывается?</b>
+              <span id="auth-guest-sub" class="hint">Включим 20 минут бесплатно — Telegram заработает, войдите через него, и подписка подключится сама.</span></span>
+            <b id="auth-guest-left" class="g-left"></b>
+          </div>
+          <button id="acc-guest" class="btn wide">Включить 20 минут бесплатно</button>
+          <div id="auth-guest-msg" class="msg"></div>
+        </div>
+        <div class="auth-alt">
+          <button id="auth-have-sub" class="linkbtn">У меня есть ссылка подписки</button>
+        </div>
       </div>
 
       <!-- вошёл -->
@@ -421,6 +498,52 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6"/></svg>
             </button>
           </div>
+        </div>
+
+        <!-- способы входа: к аккаунту из Telegram привязывается почта — один аккаунт, два входа (linkmail.js) -->
+        <div class="card pad logins" id="logins">
+          <div class="cap">Способы входа</div>
+          <div class="lg-row">
+            <span class="am-ico tg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span>
+            <span class="tx"><b>Telegram</b><span id="lg-tg-sub" class="sub">—</span></span>
+            <span id="lg-tg-st" class="lg-st"></span>
+          </div>
+          <div class="lg-row">
+            <span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span>
+            <span class="tx"><b>Почта</b><span id="lg-mail-sub" class="sub">—</span></span>
+            <span id="lg-mail-st" class="lg-st"></span>
+          </div>
+
+          <!-- привязать почту -->
+          <div id="lg-form" class="lg-pane" hidden>
+            <div class="hint">Привяжите почту — и входите в этот же аккаунт и через Telegram, и по почте с паролем. Подписка и баланс общие.</div>
+            <input id="lg-email" type="email" spellcheck="false" placeholder="почта" autocomplete="email" />
+            <input id="lg-pass" type="password" placeholder="пароль, от 8 символов" autocomplete="new-password" />
+            <input id="lg-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
+            <button id="lg-link" class="btn primary wide">Привязать почту</button>
+          </div>
+
+          <!-- почта ждёт подтверждения -->
+          <div id="lg-wait" class="lg-pane" hidden>
+            <div class="hint">Мы отправили письмо на <b id="lg-wait-mail"></b> — откройте его и нажмите «Подтвердить почту». Письма нет — проверьте «Спам».</div>
+            <div class="row2">
+              <button id="lg-resend" class="btn wide">Отправить ещё раз</button>
+              <button id="lg-check" class="btn wide">Я подтвердил</button>
+            </div>
+          </div>
+
+          <!-- почта уже у другого аккаунта: код из письма → объединение -->
+          <div id="lg-merge" class="lg-pane" hidden>
+            <div class="hint">Эта почта уже привязана к другому аккаунту ВПНушки. Мы отправили на неё 6-значный код — введите его, чтобы объединить аккаунты в один.</div>
+            <input id="lg-code" type="text" inputmode="numeric" maxlength="6" placeholder="код из письма" autocomplete="one-time-code" />
+            <button id="lg-code-go" class="btn primary wide">Подтвердить код</button>
+          </div>
+          <div id="lg-merge-pick" class="lg-pane" hidden>
+            <div class="hint">Объединяем два аккаунта в один. Баланс сложится, вход будет и через Telegram, и по почте. Выберите, чью подписку оставить:</div>
+            <div id="lg-merge-opts" class="lg-opts"></div>
+            <button id="lg-merge-go" class="btn primary wide" disabled>Объединить</button>
+          </div>
+          <div id="lg-msg" class="msg"></div>
         </div>
 
         <div class="card pad">
@@ -567,6 +690,20 @@
           <span id="nav-ofx-dot" class="dot"></span>
           <span class="chev"></span>
         </button>
+        <button class="row tap" id="support">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
+          <span class="tx"><b>Поддержка и вопросы</b><span class="sub">частые вопросы, тарифы, чат с нами</span></span>
+          <span id="sup-dot" class="dot live" style="display:none"></span>
+          <span class="chev"></span>
+        </button>
+      </div>
+
+      <span class="label section">Оформление</span>
+      <div class="card pad">
+        <div class="seg" id="theme-seg">
+          <button data-theme-pick="dark">Тёмная</button>
+          <button data-theme-pick="light">Светлая</button>
+        </div>
       </div>
 
       <span class="label section autohide-label">Приложение</span>
@@ -599,6 +736,18 @@
           <button id="sub-refresh" class="btn wide">Обновить</button>
         </div>
         <button id="sub-open" class="btn wide">Открыть страницу подписки</button>
+        <div class="ctl sub-auto">
+          <span class="lbl"><b>Обновлять автоматически</b><span id="sub-auto-at">список серверов, трафик и срок подписки</span></span>
+          <select id="sub-auto">
+            <option value="0">выключено</option>
+            <option value="30">каждые 30 минут</option>
+            <option value="60">каждый час</option>
+            <option value="180">каждые 3 часа</option>
+            <option value="360">каждые 6 часов</option>
+            <option value="720">каждые 12 часов</option>
+            <option value="1440">раз в сутки</option>
+          </select>
+        </div>
         </div>
       </details>
 
@@ -737,7 +886,7 @@
         <div id="upd-status" class="hint"></div>
         <div class="row2">
           <button id="check-update" class="btn wide">Обновления</button>
-          <button id="support" class="btn wide">Поддержка<span id="sup-dot" class="dot live" style="display:none"></span></button>
+          <button id="support-about" class="btn wide">Поддержка</button>
         </div>
         <button id="docs" class="btn wide">Документы</button>
         <button id="quit" class="btn danger wide">Выйти из приложения</button>
@@ -806,6 +955,24 @@
   <div id="toast" class="toast"></div>
   <!-- Согласие с документами: при первом запуске и при новой редакции.
        «Принимаю» включается, только когда текст прочитан до конца. -->
+  <!-- экран входа: после соглашения, пока нет ни аккаунта, ни подписки (auth.js) -->
+  <div id="auth-gate" class="auth-gate" style="display:none">
+    <div class="ag-bg"><i></i></div>
+    <div class="ag-scroll">
+      <div class="ag-top">
+        <img src="brand.png" alt="" class="ag-mark" />
+        <span class="eyebrow">Добро пожаловать</span>
+        <h1 class="ag-title">Вход в <em>ВПНушку</em></h1>
+        <p class="ag-sub">Войдите удобным способом — подписка подключится сама, а нажать останется одну кнопку.</p>
+      </div>
+      <div id="auth-slot"></div>
+      <div id="ag-side" class="ag-side">
+        <div id="ag-guest-slot"></div>
+        <button id="auth-later" class="linkbtn ag-later">Войду позже</button>
+      </div>
+    </div>
+  </div>
+
   <div id="consent" class="consent" style="display:none">
     <div class="c-head">
       <b>Прежде чем начать</b>
@@ -832,8 +999,11 @@
   <script src="account.js"></script>
   <script src="gift.js"></script>
   <script src="guest.js"></script>
+  <script src="auth.js"></script>
+  <script src="linkmail.js"></script>
   <script src="news.js"></script>
   <script src="invite.js"></script>
   <script src="support.js"></script>
+  <script src="faq.js"></script>
 </body>
 </html>

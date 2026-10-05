@@ -1,11 +1,11 @@
 {
-  "version": "2.0.1",
-  "notes": "Исправлена регистрация по почте на экране входа.",
-  "pub_date": "2026-10-05T15:01:32Z",
+  "version": "2.0.2",
+  "notes": "Способы входа: привяжите почту к аккаунту Telegram (Кабинет → Способы входа) — один аккаунт, вход и через Telegram, и по почте.",
+  "pub_date": "2026-10-05T17:15:12Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093b3gxNDh6MEZ5eUZjMGcxalFFcW5yeW1Sa3pSejJhVERUVDV3ajZZaVZVN2VGZ1ZMRzBDRlRCOTBxbHBqRXl4MGg3b2lDMVlyQmxUUFFkbGFSOHdUN2c0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjEyMDg4CWZpbGU6VlBOVVNIS0FfMi4wLjFfeDY0LXNldHVwLmV4ZQp1YkxDblozanFteGdpM2czMHVOd0IvSTdiUE5PbzlqWXpZZ1gxbVlTZEE4S2QweWkzWnlUTDNtRU1nSmhCbGlEcm1jT1RmWU5oTE56ZUlGdnpNSVlDdz09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.1/VPNUSHKA_2.0.1_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzYyaTRQb0NkN2dTSUVKMVhJbkM0Z2JFZkJFNjhtRXd0Y1paQTVmL3IwcUY5dzExZHFTY2F0aGpyMngwdVB4KzhieXpBY21YTkJvcG0wQVVRbGo0QWc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjIwMDQzCWZpbGU6VlBOVVNIS0FfMi4wLjJfeDY0LXNldHVwLmV4ZQpUd0ptcnB1SERyemZMQ0Fuend5amVta0UwSVBCOC9YRGlFU0oxMGlyTzhFSzA5SDhIZXdCWmJPWWxSTWU4dGQzT1dGeUZpeTEycjJuT0lmazE4ZmNCZz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.2/VPNUSHKA_2.0.2_x64-setup.exe"
     }
   }
 }

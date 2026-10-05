@@ -22,9 +22,12 @@ function guestActive() {
 }
 
 function guestMsg(text, kind) {
-  const m = el("guest-msg");
-  m.textContent = text || "";
-  m.className = "msg" + (kind ? " " + kind : "");
+  for (const id of ["guest-msg", "auth-guest-msg"]) {
+    const m = el(id);
+    if (!m) continue;
+    m.textContent = text || "";
+    m.className = "msg" + (kind ? " " + kind : "");
+  }
 }
 
 // Карточка на главной висит, пока человек не вошёл через Telegram (на всех
@@ -35,7 +38,9 @@ function paintGuest() {
   const card = el("guest-card");
   const active = guestActive() && !guestExpired();
   const noSub = !profile || !profile.sub;
-  const showCard = active || !acc;
+  // 2.0.0: вход — на экране входа (auth.js); на главной карточка только с
+  // таймером, пока идёт временный доступ
+  const showCard = active;
   card.style.display = showCard ? "" : "none";
   // сервер у гостя один и выбирать нечего — место отдаём карточке
   el("home-server").style.display = active ? "none" : "";
@@ -64,8 +69,9 @@ function paintGuest() {
 
 async function startGuest() {
   if (state === "connecting") return;
-  show("home");
-  const btn = el("guest-go");
+  const fromAuth = typeof authOpen === "function" && authOpen();
+  if (!fromAuth) show("home");
+  const btn = el("acc-guest");
   btn.disabled = true;
   guestMsg("получаю временный доступ…", "busy");
   try {
@@ -79,7 +85,10 @@ async function startGuest() {
     await loadServers();
     guestMsg("");
     paintGuest();
+    // с экрана входа: дальше — вход через Telegram, он теперь откроется
+    if (typeof setAuthMethod === "function") setAuthMethod("tg");
     await toggleConnection();
+    if (typeof paintAuthGuest === "function") paintAuthGuest();
   } catch (e) {
     guestMsg(errText(e), "err");
   }
@@ -121,7 +130,7 @@ async function endGuest(msg, keepSub) {
 
 on(el("guest-go"), "click", startGuest);
 on(el("acc-guest"), "click", startGuest);
-on(el("guest-login"), "click", () => { show("account"); loginTelegram(); });
+on(el("guest-login"), "click", () => { if (typeof setAuthMethod === "function") setAuthMethod("tg"); openAuth(); });
 on(el("guest-stop"), "click", () => endGuest("временный доступ завершён"));
 
 setInterval(() => {

@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
-  "notes": "Исправлена регистрация по почте на экране входа.",
-  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.1/VPNUSHKA_2.0.1_ios.ipa"
+  "version": "2.0.2",
+  "notes": "Способы входа: привяжите почту к аккаунту Telegram (Кабинет → Способы входа) — один аккаунт, вход и через Telegram, и по почте.",
+  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.2/VPNUSHKA_2.0.2_ios.ipa"
 }

@@ -27,7 +27,24 @@ const API_TEXT = [
   [/Account is deactivated/i, "аккаунт отключён — напишите в поддержку"],
   [/Too many requests/i, "слишком много попыток — подождите минуту"],
   [/Invalid email or password|Incorrect email or password/i, "неверная почта или пароль"],
-  [/Email not verified/i, "почта не подтверждена — откройте письмо от кабинета"],
+  [/Email not verified|verify your email/i, "почта не подтверждена — откройте письмо и нажмите ссылку"],
+  [/already registered/i, "эта почта уже зарегистрирована — войдите или восстановите пароль"],
+  [/already have a verified email/i, "к аккаунту уже привязана подтверждённая почта"],
+  [/already linked to your account/i, "эта почта уже привязана к вашему аккаунту"],
+  [/cannot be linked to your account/i, "эту почту нельзя привязать"],
+  [/Invalid confirmation code/i, "неверный код — проверьте письмо"],
+  [/Too many invalid attempts/i, "слишком много неверных кодов — начните заново"],
+  [/No pending account merge|Please start again/i, "время на объединение вышло — начните заново"],
+  [/no longer available to merge/i, "этот аккаунт уже нельзя объединить"],
+  [/Merge token is invalid|already consumed/i, "время на объединение вышло — начните заново"],
+  [/Email is already verified/i, "почта уже подтверждена"],
+  [/Disposable email/i, "временные почтовые ящики не принимаются"],
+  [/cannot be used for registration/i, "эту почту нельзя использовать для регистрации"],
+  [/Password login not configured/i, "у этого аккаунта нет пароля — войдите через Telegram или нажмите «Забыли пароль?»"],
+  [/Email auth.*disabled|Email authentication is disabled/i, "вход по почте сейчас выключен"],
+  [/Email service is not configured/i, "письма сейчас не отправляются — попробуйте позже или войдите через Telegram"],
+  [/value is not a valid email|valid email address/i, "проверьте адрес почты"],
+  [/at least 8 characters/i, "пароль — от 8 символов"],
   [/Invalid or unavailable payment method/i, "этот способ оплаты сейчас недоступен"],
   [/Minimum amount is ([\d.]+)/i, (m) => "минимальная сумма — " + Math.round(+m[1]) + " ₽"],
   [/Maximum amount is ([\d.,]+)/i, (m) => "максимальная сумма — " + m[1].replace(/\.00$/, "") + " ₽"],
@@ -52,19 +69,20 @@ function apiText(r) {
   return d ? "кабинет: " + d : "кабинет ответил ошибкой " + (r ? r.status : "");
 }
 
-async function rawApi(method, path, body, bearer) {
-  return invoke("cabinet_http", { method, path, body: body ?? null, bearer: bearer || null });
+// form: {fields, filename, text} — multipart с текстовым файлом (нативная часть с 2.0.0)
+async function rawApi(method, path, body, bearer, form) {
+  return invoke("cabinet_http", { method, path, body: body ?? null, bearer: bearer || null, form: form || null });
 }
 
 // Access-токен живёт недолго: на 401 один раз обновляем его refresh-токеном.
-async function api(method, path, body) {
+async function api(method, path, body, form) {
   if (!acc) throw new Error("войдите в кабинет");
-  let r = await rawApi(method, path, body, acc.access);
+  let r = await rawApi(method, path, body, acc.access, form);
   if (r.status === 401 && acc.refresh) {
     const rr = await rawApi("POST", "/auth/refresh", { refresh_token: acc.refresh });
     if (rr.status === 200 && rr.body && rr.body.access_token) {
       await saveAccount({ ...acc, access: rr.body.access_token, refresh: rr.body.refresh_token || acc.refresh });
-      r = await rawApi(method, path, body, rr.body.access_token);   // новым токеном, не старым
+      r = await rawApi(method, path, body, rr.body.access_token, form);   // новым токеном, не старым
     } else if (rr.status === 401 || rr.status === 403) {
       await saveAccount(null);
       paintAccount();
@@ -74,8 +92,8 @@ async function api(method, path, body) {
   return r;
 }
 
-async function apiOk(method, path, body) {
-  const r = await api(method, path, body);
+async function apiOk(method, path, body, form) {
+  const r = await api(method, path, body, form);
   if (r.status < 200 || r.status >= 300) {
     const e = new Error(apiText(r));
     e.status = r.status;
@@ -165,23 +183,87 @@ async function loginTelegram() {
   }
 }
 
+// Почта: вход, регистрация (письмо со ссылкой — потом вход паролем),
+// повторная отправка письма и сброс пароля. Ссылки из писем открываются
+// в браузере (кабинет), приложению после этого достаточно войти паролем.
+let mailMode = "login";
+
+function setMailMode(m) {
+  mailMode = m;
+  document.querySelectorAll("#mail-mode [data-mail]").forEach((b) => b.classList.toggle("on", b.dataset.mail === m));
+  el("mail-reg-extra").hidden = m !== "register";
+  el("acc-login-email").textContent = m === "register" ? "Зарегистрироваться" : "Войти";
+  el("acc-pass").autocomplete = m === "register" ? "new-password" : "current-password";
+  el("mail-forgot").style.display = m === "login" ? "" : "none";
+  accMsg("mail-msg", "");
+}
+
+const mailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
 async function loginEmail() {
   const email = el("acc-email").value.trim();
   const password = el("acc-pass").value;
-  if (!email || !password) { say("введите почту и пароль", true); return; }
+  if (!mailOk(email)) { accMsg("mail-msg", "проверьте адрес почты", "err"); return; }
+  if (!password) { accMsg("mail-msg", "введите пароль", "err"); return; }
+  if (mailMode === "register") return registerEmail(email, password);
   const btn = el("acc-login-email");
   btn.disabled = true;
   try {
     const r = await rawApi("POST", "/auth/email/login", { email, password });
-    if (r.status !== 200) throw new Error(apiText(r));
+    if (r.status !== 200) {
+      if (r.status === 403 && /verify/i.test(JSON.stringify(r.body || ""))) el("mail-resend").style.display = "";
+      throw new Error(apiText(r));
+    }
     el("acc-pass").value = "";
+    accMsg("mail-msg", "");
     await loggedIn(r.body);
-  } catch (e) { say(errText(e), true); }
+  } catch (e) { accMsg("mail-msg", errText(e), "err"); }
   btn.disabled = false;
+}
+
+async function registerEmail(email, password) {
+  if (password.length < 8) { accMsg("mail-msg", "пароль — от 8 символов", "err"); return; }
+  if (password !== el("acc-pass2").value) { accMsg("mail-msg", "пароли не совпадают", "err"); return; }
+  const btn = el("acc-login-email");
+  btn.disabled = true;
+  try {
+    const body = { email, password, language: "ru" };
+    const name = el("acc-regname").value.trim();
+    if (name) body.first_name = name.slice(0, 64);
+    const r = await rawApi("POST", "/auth/email/register/standalone", body);
+    if (r.status !== 200 && r.status !== 201) throw new Error(apiText(r));
+    el("acc-pass2").value = "";
+    setMailMode("login");
+    el("mail-resend").style.display = "";
+    if (r.body && r.body.requires_verification === false) {
+      accMsg("mail-msg", "Готово — теперь войдите с этим паролем.", "ok");
+    } else {
+      accMsg("mail-msg", "Письмо отправлено на " + email + ". Откройте его и нажмите ссылку — затем вернитесь "
+        + "сюда и нажмите «Войти». Письма нет — проверьте «Спам».", "ok");
+    }
+  } catch (e) { accMsg("mail-msg", errText(e), "err"); }
+  btn.disabled = false;
+}
+
+async function resendMail() {
+  const email = el("acc-email").value.trim();
+  if (!mailOk(email)) { accMsg("mail-msg", "впишите почту, на которую регистрировались", "err"); return; }
+  const r = await rawApi("POST", "/auth/email/register/resend", { email }).catch((e) => ({ status: 0, body: errText(e) }));
+  accMsg("mail-msg", r.status === 200 ? "Если почта ждёт подтверждения, письмо придёт через минуту-две."
+    : apiText(r), r.status === 200 ? "ok" : "err");
+}
+
+async function forgotPassword() {
+  const email = el("acc-email").value.trim();
+  if (!mailOk(email)) { accMsg("mail-msg", "впишите почту — пришлём ссылку для нового пароля", "err"); return; }
+  const r = await rawApi("POST", "/auth/password/forgot", { email }).catch((e) => ({ status: 0, body: errText(e) }));
+  accMsg("mail-msg", r.status === 200 ? "Если такой аккаунт есть, ссылка для нового пароля уже на почте. "
+    + "Задайте пароль по ссылке и войдите здесь." : apiText(r), r.status === 200 ? "ok" : "err");
 }
 
 async function loggedIn(auth) {
   loginGen++;
+  if (typeof closeAuth === "function") closeAuth();
   el("acc-login-tg").disabled = false;
   await saveAccount({ access: auth.access_token, refresh: auth.refresh_token, user: auth.user || null });
   accMsg("acc-login-msg", "");
@@ -326,7 +408,7 @@ function paintHomeAccount() {
   const wdot = () => { el("win-acc-dot").className = "wdot" + (/warn|err/.test(dot.className) ? " " + dot.className.split(" ")[1] : ""); };
   if (!acc) {
     t.textContent = "Кабинет";
-    sub.textContent = "войдите через Telegram — баланс и продление здесь";
+    sub.textContent = "войдите в аккаунт — баланс и продление здесь";
     dot.className = "dot";
     wdot();
     if (typeof paintGuest === "function") paintGuest();
@@ -351,6 +433,7 @@ function paintHomeAccount() {
 }
 
 function paintAccount() {
+  if (typeof paintLogins === "function") setTimeout(paintLogins, 0);
   el("acc-out").style.display = acc ? "none" : "";
   el("acc-in").style.display = acc ? "" : "none";
   paintHomeAccount();
@@ -854,6 +937,11 @@ function stopPayWatch() { clearTimeout(payWatch); payWatch = 0; }
 on(el("acc-login-tg"), "click", loginTelegram);
 on(el("acc-login-reopen"), "click", () => loginLink && invoke("open_url", { url: loginLink }).catch(() => {}));
 on(el("acc-login-email"), "click", loginEmail);
+document.querySelectorAll("#mail-mode [data-mail]").forEach((b) => on(b, "click", () => setMailMode(b.dataset.mail)));
+on(el("mail-resend"), "click", resendMail);
+on(el("mail-forgot"), "click", forgotPassword);
+on(el("acc-pass2"), "keydown", (e) => { if (e.key === "Enter") loginEmail(); });
+on(el("mail-docs"), "click", (e) => { e.preventDefault(); if (typeof paintConsent === "function") paintConsent(true); });
 on(el("acc-pass"), "keydown", (e) => { if (e.key === "Enter") loginEmail(); });
 on(el("acc-logout"), "click", logout);
 on(el("acc-reload"), "click", async () => { await refreshAccount(false); say("кабинет обновлён"); });
