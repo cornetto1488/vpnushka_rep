@@ -1,11 +1,11 @@
 {
-  "version": "1.4.1",
-  "notes": "Поддержка прямо в приложении: пишите — ответ придёт сюда и уведомлением. Предупреждения о трафике на 80/95/100%.",
-  "pub_date": "2026-10-05T10:09:33Z",
+  "version": "2.0.0",
+  "notes": "Поддержка в один тап: кнопка в шапке — частые вопросы, все тарифы и чат (журнал прикладывается файлом). Вход и регистрация по почте. Честное «подключено» — только когда сервер реально отвечает. Подписка обновляется сама (раз в час, можно поменять). Мобильные операторы: у каждого устройства свой канал.",
+  "pub_date": "2026-10-05T13:19:24Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093b3hKcVRhWDZGVm5wVEpKeEtzcWlta1lRcFovemkybFZNM1VETmVjZW9yc0RQVTdFanVKWFc3UkdRc3BqU3JGcm5GL25teXJMZDEzTi9mRmx1eUVFd3drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMTk0NTc0CWZpbGU6VlBOVVNIS0FfMS40LjFfeDY0LXNldHVwLmV4ZQpVMWpZbWtKdEo1dnpDa0wyQitTZUdBcFRsUmZ1L1JxbUp2bDZyY0tpQWx0cUdGMXZKK3gvVVYzL3Jld3FGd2wvUUl4YmhKVHRyKy9VaG9UMTdEWHdBZz09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v1.4.1/VPNUSHKA_1.4.1_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093b3l3cktzMmpQc2Z2S1FvN0tkUjNUUEpjeGF1anR2bjN6eitYZ2JZK1JiMG1JZHRka3FaZDhMMHRad1ltQzU3MXVIMENnSFAyVWZxcjd1Z1VBNkNkVmc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjA1OTQ5CWZpbGU6VlBOVVNIS0FfMi4wLjBfeDY0LXNldHVwLmV4ZQpzTlpsQnNaWmlzcnB6Zmp2K3dhei9HZk1YVXkrVHlvVUU3aTRFWjRGc0lGR2RTb3Rta0FmYXBwbytHcFdiRGYvYlRJeUtTYk40MFR2SUt0R1VtblJDdz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.0/VPNUSHKA_2.0.0_x64-setup.exe"
     }
   }
 }

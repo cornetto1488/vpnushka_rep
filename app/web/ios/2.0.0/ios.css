@@ -1,0 +1,15 @@
+/* VPNUSHKA для iPhone: поправки поверх style.css и android.css. */
+html.ios body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+html.ios, html.ios body { overscroll-behavior: none; }
+html.ios #tabs { margin-bottom: 6px; }
+html.ios input, html.ios textarea, html.ios select { font-size: 16px; }   /* iOS увеличивает страницу при фокусе на поле мельче 16px */
+
+/* Вырез (чёлка/Dynamic Island): картина главной уходит под него, на других
+   экранах там сплошной фон заголовка — раньше в просвет выглядывала сетка фона. */
+html.ios { --sat: env(safe-area-inset-top, 0px); }
+html.ios body { padding-top: 0; }
+html.ios #titlebar { height: calc(var(--tb) + var(--sat)); padding-top: var(--sat); background: var(--bg); }
+html.ios:not(.home-scrolled):is(:not([data-view]), [data-view="home"]) #titlebar { background: transparent; }
+html.ios:is(:not([data-view]), [data-view="home"]) #views { margin-top: calc(-1 * (var(--tb) + var(--sat))); }
+html.ios .hero { height: calc(420px + var(--sat)); }
+html.ios .consent { top: calc(var(--tb) + var(--sat)); }
