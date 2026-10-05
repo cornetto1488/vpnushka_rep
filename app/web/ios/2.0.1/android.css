@@ -1,0 +1,16 @@
+/* VPNUSHKA для Android: поправки поверх общего style.css (телефон, палец, высокий экран). */
+html.android * { -webkit-tap-highlight-color: transparent; }
+html.android #titlebar { cursor: default; }
+html.android input, html.android textarea { font-size: 16px; }   /* без зума при фокусе */
+html.android { --tb: 50px; }
+html.android .hero { height: 420px; }
+html.android .hero-head { font-size: 44px; }
+html.android .power { width: 82px; height: 82px; right: 18px; bottom: 26px; }
+html.android .power > svg:not(.ring) { width: 30px; height: 30px; }
+html.android .vhead h1 { font-size: 34px; }
+html.android #tabs button { min-height: 54px; }
+html.android .row { padding: 13px 14px 13px 12px; }
+html.android .srv { padding: 12px 14px 12px 8px; }
+
+/* на телефоне фон без сетки — только свечение и зерно */
+html.android .backdrop .grid { display: none; }

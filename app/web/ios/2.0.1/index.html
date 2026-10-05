@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>VPNUSHKA</title>
+  <link rel="stylesheet" href="fonts/fonts.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="android.css" />
+  <link rel="stylesheet" href="ios.css" />
+</head>
+<body>
+  <!-- плёночное зерно и сетка на фоне — как на apodmarchuk.ru -->
+  <div class="backdrop" aria-hidden="true"><i class="glow"></i><i class="grid"></i><i class="grain"></i></div>
+
+  <!-- ── заголовок окна (у окна нет системной рамки) ─────────────────────── -->
+  <header id="titlebar">
+    <button id="tb-back" class="wbtn" title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <!-- логотип как на apodmarchuk.ru: чёрная плашка, оранжевое «ВПН / УШКА» капслоком Onest -->
+    <span class="brand" aria-label="ВПНУШКА">
+      <img class="brand-mark" src="brand.png" alt="" draggable="false" />
+    </span>
+    <span id="tb-title" class="tb-title"></span>
+    <span id="tb-state" class="tb-state"></span>
+    <span class="grow"></span>
+    <button id="win-acc" class="wbtn legacy" title="Кабинет" tabindex="-1"></button>
+    <button id="win-more" class="wbtn legacy" title="Настройки" tabindex="-1"></button>
+    <button id="win-support" class="wbtn" title="Поддержка и частые вопросы">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg>
+      <span id="sup-dot-tb" class="tb-dot" style="display:none"></span>
+    </button>
+    <button id="win-min" class="wbtn" title="Свернуть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>
+    </button>
+    <button id="win-close" class="wbtn danger" title="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </header>
+
+  <!-- ── update banner (any screen) ──────────────────────────────────────── -->
+  <div id="update-bar" class="updbar">
+    <span class="tx">
+      <b id="upd-title">Доступно обновление</b>
+      <span id="upd-sub" class="sub"></span>
+    </span>
+    <button id="upd-go" class="btn sm primary">Обновить</button>
+    <button id="upd-later" class="btn sm">Позже</button>
+  </div>
+
+  <main id="views">
+    <!-- ── ГЛАВНАЯ: зал с картиной ───────────────────────────────────────── -->
+    <section id="view-home" class="view on">
+      <div class="hero" id="hero">
+        <div id="canvas" class="canvas off" title="Нажмите, чтобы сменить картину">
+          <img id="art-a" class="show" alt="" />
+          <img id="art-b" alt="" />
+          <span class="veil"></span>
+          <span class="spot"></span>
+        </div>
+        <div class="hero-ui">
+          <div class="hero-status"><i class="hs-dot"></i><span id="power-label">Подключиться</span></div>
+          <h1 id="hero-head" class="hero-head">VPN <em>выключен</em></h1>
+          <span id="state-sub" class="hero-sub">нажмите кнопку, чтобы подключиться</span>
+          <div id="art-cap" class="artcap">
+            <span id="art-author"></span><span id="art-year" class="a-year"></span>
+            <span id="art-title" class="a-title"></span>
+          </div>
+        </div>
+        <button id="power" class="power off" type="button" title="Нажмите, чтобы подключиться">
+          <svg class="ring" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="37" pathLength="100"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v8M6.6 6.8a7.5 7.5 0 1 0 10.8 0"/></svg>
+          <span class="lbl alt">Отключиться</span>
+          <span class="bar"></span>
+        </button>
+      </div>
+
+      <div class="home-body">
+        <!-- Акция до 02.11.2026: неделя подписки в подарок за установку приложения (gift.js) -->
+        <div id="gift-card" class="card gift" style="display:none">
+          <span class="gift-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="4" rx="1"/><path d="M5 12.5v7.5h14v-7.5M12 8.5V20M12 8.5c-1.5-3.5-5.5-4-5.5-1.5S10 8.5 12 8.5Zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 8.5 12 8.5Z"/></svg></span>
+          <span class="tx">
+            <b id="gift-title">Неделя подписки в подарок</b>
+            <span id="gift-sub" class="sub">за установку приложения ВПНушка · до 2 ноября</span>
+          </span>
+          <button id="gift-go" class="btn sm primary">Забрать</button>
+          <div id="gift-msg" class="msg"></div>
+        </div>
+
+        <!-- Новости: пишутся в админке кабинета, приходят без обновления приложения (news.js) -->
+        <button id="news-card" class="card row tap" style="display:none" data-go="news">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5h11v14H6a1 1 0 0 1-1-1V5Z"/><path d="M16 9h3v9a1 1 0 0 1-1 1h-2M8 9h5M8 12.5h5M8 16h3"/></svg></span>
+          <span class="tx"><b id="news-card-title">Новости</b><span id="news-card-sub" class="sub"></span></span>
+          <span id="news-dot" class="dot live" style="display:none"></span>
+          <span class="chev"></span>
+        </button>
+
+        <!-- Пригласи друга: реферальная программа бота (invite.js) -->
+        <button id="invite-card" class="card row tap invite-card" style="display:none" data-go="invite">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8M17 8v6M14 11h6"/></svg></span>
+          <span class="tx"><b id="invite-card-title">Позови друга — месяц бесплатно</b><span id="invite-card-sub" class="sub">за каждого, кто оплатит подписку</span></span>
+          <span class="chev"></span>
+        </button>
+
+        <button id="home-server" class="server-pill tap">
+          <span id="h-flag" class="flag"></span>
+          <span class="tx"><span class="label">Сервер</span><b id="h-name">—</b><span id="h-desc" class="sub">сервер не выбран</span></span>
+          <span id="h-ms" class="ms"></span>
+          <span class="chev"></span>
+        </button>
+
+        <div class="controls">
+          <div class="ctl">
+            <span class="label">Режим</span>
+            <div class="seg pill" id="home-modes">
+              <button data-pick-mode="tun">VPN</button>
+              <button data-pick-mode="proxy">Прокси</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <span class="label">Маршрут</span>
+            <div class="seg pill" id="home-routes">
+              <button data-pick-route="global">Всё</button>
+              <button data-pick-route="rule">Пресет</button>
+              <button data-pick-route="direct">Напрямую</button>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="metrics" id="metrics">
+          <div class="m-head">
+            <span class="m-leg d"><i></i><span class="m-cap">Приём</span><b id="m-down">0 Кб/с</b></span>
+            <span class="m-leg u"><i></i><span class="m-cap">Отдача</span><b id="m-up">0 Кб/с</b></span>
+            <span class="m-ses"><span class="m-cap">Сессия</span><b id="m-time">00:00</b></span>
+          </div>
+          <div class="spark-wrap" id="spark-wrap">
+            <svg id="spark" class="spark" preserveAspectRatio="none" aria-label="Скорость за последнюю минуту" role="img"></svg>
+            <span id="spark-idle" class="spark-idle">график появится после подключения</span>
+            <div id="spark-tip" class="spark-tip" hidden></div>
+          </div>
+        </div>
+        <div class="chips">
+          <span id="chip-ip" class="chip"></span>
+          <span id="chip-proxy" class="chip tap" title="Нажмите, чтобы скопировать адрес"></span>
+          <span id="chip-traffic" class="chip"></span>
+        </div>
+
+      <!-- Временный доступ: человек из РФ без VPN не может войти через Telegram.
+           20 минут через NL, где сервер пускает только Telegram и кабинет. -->
+      <div id="guest-card" class="card guest" style="display:none">
+        <div class="g-head">
+          <span class="g-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+          <span class="tx">
+            <b id="guest-title">Не получается войти?</b>
+            <span id="guest-sub" class="sub">20 минут бесплатно — чтобы войти в кабинет</span>
+          </span>
+          <b id="guest-left" class="g-left"></b>
+        </div>
+        <button id="guest-login" class="btn primary wide">Войти в аккаунт</button>
+        <button id="guest-go" class="btn wide">Временный доступ · 20 минут</button>
+        <div id="guest-msg" class="msg"></div>
+        <button id="guest-stop" class="linkbtn" style="display:none">Завершить временный доступ</button>
+      </div>
+
+      <!-- Напоминание: подписка кончается (за 3 дня) или уже кончилась -->
+      <button id="exp-card" class="card row tap warn" style="display:none">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
+        <span class="tx">
+          <b id="exp-title">Подписка заканчивается</b>
+          <span class="sub">продлите в кабинете — пара нажатий</span>
+        </span>
+        <span class="chev">›</span>
+      </button>
+
+
+        <!-- старые плитки главной: их по-прежнему красит app.js, на экране они не нужны -->
+        <div class="legacy" hidden>
+          <button id="home-mode"><span id="hm-ico"></span><b id="hm-title"></b><span id="hm-sub"></span></button>
+          <button id="home-account"><b id="h-acc-title"></b><span id="h-acc"></span><span id="h-acc-dot"></span></button>
+          <button id="q-mode"><b></b></button><button id="q-route"><b></b></button><button id="q-frag"><b></b></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── НОВОСТИ ───────────────────────────────────────────────────────── -->
+    <section id="view-news" class="view">
+      <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Что нового</span><h1>Новости</h1></header>
+      <div id="news-list" class="news-list"></div>
+      <article id="news-art" class="card news-art" hidden>
+        <img id="news-art-img" class="news-art-img" alt="" hidden />
+        <div class="news-art-body">
+          <span id="news-art-meta" class="news-meta"></span>
+          <h2 id="news-art-title"></h2>
+          <div id="news-art-html" class="news-html"></div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ── ПОДДЕРЖКА ──────────────────────────────────────────────────────── -->
+    <section id="view-support" class="view">
+      <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Отвечаем сами, обычно в течение часа</span><h1>Поддержка</h1></header>
+      <div class="seg sup-tabs" id="sup-tabs">
+        <button data-sup="faq" class="on">Вопросы</button>
+        <button data-sup="prices">Тарифы</button>
+        <button data-sup="chat">Чат<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
+      </div>
+
+      <!-- частые вопросы: содержимое в faq.js -->
+      <div id="sup-faq" class="sup-pane">
+        <div id="faq-list" class="faq-list"></div>
+        <div class="card pad faq-more">
+          <b>Не нашли ответ?</b>
+          <span class="hint">Напишите нам — приложим сведения о подключении, чтобы разобраться быстрее.</span>
+          <button class="btn primary wide" data-sup-go="chat">Написать в поддержку</button>
+        </div>
+      </div>
+
+      <!-- тарифы: таблица считается в faq.js по формуле бота -->
+      <div id="sup-prices" class="sup-pane" hidden>
+        <div class="card price-hero">
+          <span class="eyebrow">Как считается</span>
+          <div class="price-formula">
+            <span class="pf-box"><b>75 ₽</b><small>месяц, 1 устройство</small></span>
+            <span class="pf-op">+</span>
+            <span class="pf-box"><b>30 ₽</b><small>каждое ещё в месяц</small></span>
+            <span class="pf-op">=</span>
+            <span class="pf-box hot"><b>105 ₽</b><small>за 2 устройства</small></span>
+          </div>
+          <div class="hint">Чем дольше период — тем дешевле месяц: до −17% за год. Трафик 2 ТБ в месяц, без скрытых платежей.</div>
+        </div>
+        <div class="price-devrow"><span class="label">Устройств</span><div class="seg small" id="price-dev"></div></div>
+        <div id="price-grid" class="price-grid"></div>
+        <div class="card pad price-pay">
+          <b>Как оплатить</b>
+          <span class="hint">Пополните баланс в Кабинете картой или криптовалютой, затем выберите период — подписка продлится сразу. Оплатить можно и в боте @vpnushka_bot.</span>
+          <button class="btn primary wide" data-sup-go-view="account">Открыть Кабинет</button>
+        </div>
+      </div>
+
+      <div id="sup-chat" class="sup-pane" hidden>
+      <div id="sup-list" class="sup-list">
+        <div id="sup-empty" class="hint">Опишите, что случилось: какой сервер, что не открывается, с какого времени. Ответ придёт сюда, в бот и уведомлением.</div>
+      </div>
+      <div class="card sup-form">
+        <div id="sup-login" class="sup-login" style="display:none">
+          <div class="hint">Чтобы написать из приложения, войдите в кабинет — так поддержка сразу увидит вашу подписку. Или напишите в Telegram.</div>
+          <button id="sup-login-btn" class="btn wide">Войти в кабинет</button>
+        </div>
+        <div id="sup-form-in" class="sup-form">
+          <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в поддержку…"></textarea>
+          <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
+            <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и последние строки журнала — так быстрее разобраться</span></span></label>
+          <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
+            <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: весь журнал за этот запуск — что делал движок, какие были ошибки</span></span></label>
+          <button id="sup-send" class="btn primary wide">Отправить</button>
+          <div id="sup-status" class="hint"></div>
+        </div>
+        <button id="sup-tg" class="btn tg wide">Написать в Telegram @vpnushka_manager</button>
+      </div>
+      </div>
+    </section>
+
+    <!-- ── ПРИГЛАСИТЬ ДРУГА ──────────────────────────────────────────────── -->
+    <section id="view-invite" class="view">
+      <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Реферальная программа</span><h1>Пригласи друга</h1></header>
+
+      <div class="card inv-hero">
+        <div class="inv-gift">
+          <div><b id="inv-you">+30</b><span>дней вам</span></div>
+          <i aria-hidden="true">+</i>
+          <div><b id="inv-friend">+7</b><span>дней другу</span></div>
+        </div>
+        <p id="inv-how" class="hint">Друг переходит по вашей ссылке, входит через Telegram и оплачивает подписку —
+          дни начисляются вам обоим автоматически. Без лимита: 10 друзей — почти год бесплатно.</p>
+      </div>
+
+      <div id="inv-out" class="card pad" style="display:none">
+        <p class="hint">Чтобы получить свою ссылку, войдите в аккаунт — по почте или через Telegram.</p>
+        <button id="inv-login" class="btn primary wide">Войти в аккаунт</button>
+      </div>
+
+      <div id="inv-in" class="stack" style="display:none">
+        <div class="card pad">
+          <span class="label">Ваша ссылка</span>
+          <button id="inv-link" class="inv-link" title="Скопировать">—</button>
+          <div class="row2">
+            <button id="inv-tg" class="btn tg wide">Отправить в Telegram</button>
+            <button id="inv-copy" class="btn wide">Скопировать</button>
+          </div>
+          <button id="inv-share" class="btn wide" style="display:none">Поделиться…</button>
+          <div id="inv-msg" class="msg"></div>
+        </div>
+
+        <div class="card pad">
+          <div class="inv-stats">
+            <div><b id="inv-n">0</b><span>пригласили</span></div>
+            <div><b id="inv-paid">0</b><span>оплатили</span></div>
+            <div><b id="inv-days">0</b><span>дней получено</span></div>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <span class="label">Чем больше друзей — тем больше за каждого</span>
+          <div id="inv-levels" class="inv-levels"></div>
+          <div id="inv-next" class="hint"></div>
+        </div>
+
+        <details class="card pad" id="inv-friends-fold">
+          <summary>Приглашённые</summary>
+          <div id="inv-friends" class="txlist"></div>
+        </details>
+      </div>
+
+      <p class="hint inv-fine">Бонус засчитывается, когда друг впервые пополняет баланс от <span id="inv-min">75 ₽</span>.
+        Друг должен быть новым пользователем ВПНушки — уже зарегистрированных ссылка не привязывает.
+        Дни добавляются к вашей текущей подписке.</p>
+    </section>
+
+    <!-- ── СЕРВЕРЫ ───────────────────────────────────────────────────────── -->
+    <section id="view-servers" class="view">
+      <header class="vhead"><span class="eyebrow">Выбор выхода</span><h1>Серверы</h1></header>
+      <button id="home-channel" class="channel-card tap">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19v-3M10 19v-6M15 19V9M20 19V5"/></svg></span>
+        <span class="tx"><b>Мобильные операторы</b><span id="h-ofx" class="sub">не настроен</span></span>
+        <span id="h-ofx-dot" class="dot"></span>
+        <span class="chev"></span>
+      </button>
+
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+          <input id="srv-search" type="text" placeholder="Поиск сервера" spellcheck="false" />
+        </div>
+        <button id="ping" class="btn icon" title="Измерить пинг">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h4l2.5 6 5-14L17 12h4"/></svg>
+        </button>
+        <button id="refresh" class="btn icon" title="Обновить список">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6"/></svg>
+        </button>
+      </div>
+      <div class="seg small" id="srv-sort">
+        <button data-sort="panel" class="on">Как в панели</button>
+        <button data-sort="ping">По пингу</button>
+        <button data-sort="name">По имени</button>
+      </div>
+      <div id="srv-list" class="list"></div>
+    </section>
+
+    <!-- ── МОБИЛЬНЫЕ ОПЕРАТОРЫ ───────────────────────────────────────────── -->
+    <section id="view-channel" class="view">
+      <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Для мобильного интернета</span><h1>Мобильные операторы</h1></header>
+
+      <div class="card pad">
+        <div class="ofx-head">
+          <span id="ofx-dot" class="dot big"></span>
+          <div class="tx">
+            <b id="ofx-title">Канал не настроен</b>
+            <span id="ofx-note" class="sub">нужен ваш документ на Яндекс.Диске</span>
+          </div>
+        </div>
+        <p class="hint">Отдельный канал для мобильного интернета: трафик идёт через Яндекс Документы.
+          Хватает для мессенджеров, банков и госуслуг; для видео скорости мало.</p>
+        <p class="hint"><b>Один документ — одно устройство.</b> Для телефона и компьютера
+          нужны разные документы, иначе они будут обрывать канал друг другу.</p>
+      </div>
+
+      <!-- Сначала — автоматический путь: вход в Яндекс делает всё сам. Ручные
+           три шага живут ниже, под раскрывашкой: они нужны единицам, а раньше
+           стояли первыми и прятали кнопку, ради которой всё и делалось. -->
+      <div class="card pad hero-action">
+        <div class="cap">Самый быстрый способ</div>
+        <div class="hint">Войдите в Яндекс — документ создастся и настроится сам. Один вход,
+          дальше ничего делать не нужно. Окно Яндекса появится, только если он попросит
+          подтвердить вход.</div>
+        <button id="login-yandex" class="btn yandex wide big">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.3 21V3h-2.1c-3.3 0-5.6 2-5.6 5.2 0 2.4 1.1 3.9 3.2 5.2L5 21h2.6l3.6-6.9-1-.6C8.4 12.5 7.6 11.4 7.6 8.9c0-2.2 1.4-3.6 3.6-3.6h.5V21h1.6Z"/></svg>
+          Подключить автоматически
+        </button>
+        <div id="doc-msg" class="msg"></div>
+      </div>
+
+      <details class="card pad steps">
+        <summary>Настроить вручную — своим документом</summary>
+        <ol>
+          <li>
+            <div class="st">Создайте документ на своём Яндекс.Диске</div>
+            <div class="sd">Кнопка ниже откроет Диск. Нажмите <b>Создать → Текстовый документ</b>
+              и напишите в нём что угодно (хоть одну букву), чтобы он сохранился.</div>
+            <button id="open-disk" class="btn wide">Открыть Яндекс.Диск</button>
+          </li>
+          <li>
+            <div class="st">Откройте доступ по ссылке — <b>на редактирование</b></div>
+            <div class="sd">В документе: <b>Поделиться → Доступ по ссылке → Редактирование</b>,
+              затем <b>Копировать ссылку</b>. Именно «Редактирование», иначе канал не поднимется.</div>
+          </li>
+          <li>
+            <div class="st">Вставьте ссылку сюда</div>
+            <div class="sd">Ссылка выглядит так: <code>https://disk.yandex.ru/i/XXXXXXXX</code></div>
+            <input id="doc-input" type="text" spellcheck="false" placeholder="https://disk.yandex.ru/i/…" />
+            <button id="doc-save" class="btn primary wide">Проверить и включить канал</button>
+          </li>
+        </ol>
+      </details>
+
+      <details class="card pad">
+        <summary>Ещё способы</summary>
+        <div class="stack">
+          <div>
+            <div class="cap">Готовый токен OpenFlux</div>
+            <textarea id="token-input" placeholder="openflux://…"></textarea>
+            <button id="save-token" class="btn wide">Сохранить токен</button>
+          </div>
+          <div class="hr"></div>
+          <div>
+            <div class="cap">OAuth-токен Яндекса вручную</div>
+            <input id="yatoken-input" type="text" spellcheck="false" placeholder="y0_…" />
+            <button id="save-yatoken" class="btn wide">Продолжить с этим токеном</button>
+          </div>
+          <div class="hr"></div>
+          <button id="doc-clear" class="btn danger wide">Отключить канал и забыть документ</button>
+        </div>
+      </details>
+    </section>
+
+    <!-- ── КАБИНЕТ ───────────────────────────────────────────────────────── -->
+    <section id="view-account" class="view">
+      <header class="vhead"><span class="eyebrow">Баланс и подписка</span><h1>Кабинет</h1></header>
+
+      <!-- не вошёл -->
+      <!-- не вошёл: один блок входа — и в Кабинете, и на экране входа после
+           соглашения (auth.js переносит его туда). Почта и Telegram — на равных. -->
+      <div id="acc-out" class="stack auth">
+        <div class="card pad auth-card">
+          <div class="auth-head">
+            <b>Вход в аккаунт</b>
+            <span class="hint">Один аккаунт на всех устройствах — тот же, что в боте и кабинете. Баланс и подписка подтянутся сами.</span>
+          </div>
+          <div class="auth-methods" id="auth-method">
+            <button data-auth="mail"><span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span><b>Почта</b><small>логин и пароль</small></button>
+            <button data-auth="tg"><span class="am-ico tg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span><b>Telegram</b><small>через бота</small></button>
+          </div>
+
+          <div id="auth-pick" class="hint auth-pick">Пользовались ботом @vpnushka_bot — входите через <b>Telegram</b>, подписка уже там. Новый аккаунт без Telegram — через <b>почту</b>.</div>
+
+          <div id="auth-mail" class="auth-pane mail-card" hidden>
+            <div class="seg small" id="mail-mode">
+              <button data-mail="login" class="on">Вход</button>
+              <button data-mail="register">Регистрация</button>
+            </div>
+            <input id="acc-email" type="email" spellcheck="false" placeholder="почта" autocomplete="username" />
+            <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
+            <div id="mail-reg-extra" class="stack" hidden>
+              <input id="acc-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
+              <input id="acc-regname" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
+              <div class="hint">Пароль — от 8 символов. Регистрируясь, вы принимаете <a href="#" id="mail-docs">правила сервиса</a>.</div>
+            </div>
+            <button id="acc-login-email" class="btn primary wide big">Войти</button>
+            <div id="mail-msg" class="msg"></div>
+            <div class="mail-links">
+              <button id="mail-forgot" class="linkbtn">Забыли пароль?</button>
+              <button id="mail-resend" class="linkbtn" style="display:none">Отправить письмо ещё раз</button>
+            </div>
+          </div>
+
+          <div id="auth-tg" class="auth-pane" hidden>
+            <div class="hint">Откроется бот @vpnushka_bot — нажмите в нём «Запустить», затем «Подтвердить вход». Приложение подхватит вход само.</div>
+            <button id="acc-login-tg" class="btn tg wide big"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Войти через Telegram</button>
+            <div id="acc-login-msg" class="msg"></div>
+            <button id="acc-login-reopen" class="btn wide" style="display:none">Открыть Telegram ещё раз</button>
+          </div>
+        </div>
+        <!-- временный доступ: Telegram в РФ без VPN не открывается — 20 минут, чтобы войти -->
+        <div id="auth-guest" class="card pad auth-guest" style="display:none">
+          <div class="ag-row">
+            <span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg></span>
+            <span class="tx"><b id="auth-guest-title">Telegram не открывается?</b>
+              <span id="auth-guest-sub" class="hint">Включим 20 минут бесплатно — Telegram заработает, войдите через него, и подписка подключится сама.</span></span>
+            <b id="auth-guest-left" class="g-left"></b>
+          </div>
+          <button id="acc-guest" class="btn wide">Включить 20 минут бесплатно</button>
+          <div id="auth-guest-msg" class="msg"></div>
+        </div>
+        <div class="auth-alt">
+          <button id="auth-have-sub" class="linkbtn">У меня есть ссылка подписки</button>
+        </div>
+      </div>
+
+      <!-- вошёл -->
+      <div id="acc-in" class="stack" style="display:none">
+        <div class="card pad">
+          <div class="acc-head">
+            <span class="acc-ava" id="acc-ava">V</span>
+            <div class="tx">
+              <b id="acc-name">—</b>
+              <span id="acc-sub" class="sub"></span>
+            </div>
+            <button id="acc-reload" class="btn icon" title="Обновить">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <div class="cap">Баланс</div>
+          <div class="acc-balance"><b id="acc-balance">—</b></div>
+          <button id="acc-topup" class="btn primary wide">Пополнить баланс</button>
+          <div id="acc-pay-msg" class="msg"></div>
+        </div>
+
+        <div class="card pad">
+          <div class="cap">Подписка</div>
+          <div id="acc-subinfo" class="subinfo"></div>
+          <button id="acc-use-sub" class="btn wide" style="display:none">Подключить подписку из кабинета</button>
+          <button id="acc-sub-refresh" class="btn wide">Обновить подписку</button>
+        </div>
+
+        <div class="card pad" id="acc-dev-card" style="display:none">
+          <div class="cap">Устройства</div>
+          <div class="kv"><span>Подключено</span><b id="acc-dev-count">—</b></div>
+          <div id="acc-dev-warn" class="msg err"></div>
+          <div id="acc-dev-list" class="devlist"></div>
+          <button id="acc-dev-clear" class="btn danger wide" style="display:none">Отвязать все устройства</button>
+          <div class="hr"></div>
+          <div class="cap">Добавить устройства</div>
+          <div class="stepper">
+            <button id="acc-dev-minus" class="btn icon" type="button">−</button>
+            <b id="acc-dev-n">1</b>
+            <button id="acc-dev-plus" class="btn icon" type="button">+</button>
+            <span id="acc-dev-price" class="sub"></span>
+          </div>
+          <button id="acc-dev-buy" class="btn primary wide" disabled>Добавить</button>
+          <div id="acc-dev-msg" class="msg"></div>
+        </div>
+
+        <div class="card pad" id="acc-renew-card">
+          <div class="cap" id="acc-renew-cap">Продлить подписку</div>
+          <div id="acc-periods" class="periods"></div>
+          <div id="acc-renew-note" class="hint"></div>
+          <button id="acc-renew" class="btn primary wide" disabled>Выберите срок</button>
+          <div id="acc-renew-msg" class="msg"></div>
+          <button id="acc-trial" class="btn wide" style="display:none">Попробовать бесплатно</button>
+        </div>
+
+        <button class="card row tap invite-card" data-go="invite">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8M17 8v6M14 11h6"/></svg></span>
+          <span class="tx"><b>Пригласить друга</b><span id="acc-invite-sub" class="sub">месяц подписки за каждого друга</span></span>
+          <span class="chev"></span>
+        </button>
+
+        <details class="card pad" id="acc-history">
+          <summary>История операций</summary>
+          <div id="acc-tx" class="txlist"></div>
+        </details>
+
+        <div class="row2">
+          <button id="acc-open-bot" class="btn wide">Открыть бота</button>
+          <button id="acc-logout" class="btn danger wide">Выйти</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── МАРШРУТИЗАЦИЯ ─────────────────────────────────────────────────── -->
+    <section id="view-rules" class="view">
+      <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Что идёт через VPN</span><h1>Маршрутизация</h1></header>
+
+      <div class="card pad">
+        <div class="cap">Режим маршрутизации</div>
+        <div class="modes" id="route-mode">
+          <button data-rmode="global">
+            <b>Всё через VPN<i>рекомендуем</i></b>
+            <span>в тоннеле весь трафик, кроме ваших исключений «мимо VPN»</span>
+          </button>
+          <button data-rmode="rule">
+            <b>Фирменный пресет</b>
+            <span>через VPN — зарубежные сервисы и мессенджеры по нашим спискам,
+                  остальное напрямую и на полной скорости</span>
+          </button>
+          <button data-rmode="direct">
+            <b>Всё напрямую</b>
+            <span>тоннель поднят, но трафик идёт мимо: через VPN пойдёт только то,
+                  что вы добавите в исключения</span>
+          </button>
+        </div>
+        <div class="hint" id="route-base"></div>
+      </div>
+
+      <div class="card pad">
+        <div class="cap">Исключения</div>
+        <div class="hint" id="rule-hint"></div>
+        <div class="seg small" id="rule-kind">
+          <button data-kind="apps" class="on">Программы</button>
+          <button data-kind="domains">Сайты</button>
+          <button data-kind="ips">IP-адреса</button>
+        </div>
+        <div class="addrow">
+          <input id="rule-input" type="text" spellcheck="false" placeholder="chrome.exe" />
+          <button id="rule-pick" class="btn icon" title="Выбрать из запущенных программ">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+        <div class="seg small verdicts" id="rule-verdict">
+          <button data-verdict="proxy" class="on">Через VPN</button>
+          <button data-verdict="direct">Мимо VPN</button>
+          <button data-verdict="block">Блокировать</button>
+        </div>
+        <button id="rule-add" class="btn primary wide">Добавить правило</button>
+        <div class="cap" style="margin-top:2px">Готовые наборы</div>
+        <div class="presets" id="presets"></div>
+        <div id="rule-list" class="rules"></div>
+        <button id="rule-clear" class="btn wide">Очистить все правила</button>
+        <div class="hint">Исключения сильнее режима и фирменного пресета. Применяются при следующем
+          подключении. «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
+          (например <code>Telegram.exe</code>).</div>
+      </div>
+    </section>
+
+    <!-- ── НАСТРОЙКИ ─────────────────────────────────────────────────────── -->
+    <section id="view-more" class="view">
+      <header class="vhead"><span class="eyebrow">Приложение и туннель</span><h1>Настройки</h1></header>
+
+      <span class="label section">Подключение</span>
+      <div class="card pad">
+        <div class="seg" id="mode">
+          <button data-mode="tun">VPN — всё устройство</button>
+          <button data-mode="proxy">Прокси</button>
+        </div>
+        <div class="hint" id="mode-hint"></div>
+        <label class="sw"><input type="checkbox" id="auto-connect" /><i></i>
+          <span class="lbl"><b>Подключаться при запуске</b><span>соединение поднимется само</span></span></label>
+        <label class="sw" id="adblock-row" style="display:none"><input type="checkbox" id="adblock" /><i></i>
+          <span class="lbl"><b>Блокировать рекламу и трекеры</b>
+            <span>рекламные сети, баннеры и счётчики в приложениях и на сайтах</span></span></label>
+      </div>
+
+      <div class="group navlist">
+        <button class="row tap" data-go="rules">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16"/></svg></span>
+          <span class="tx"><b>Маршрутизация</b><span id="nav-route" class="sub"></span></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" data-go="channel">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19v-3M10 19v-6M15 19V9M20 19V5"/></svg></span>
+          <span class="tx"><b>Мобильные операторы</b><span id="nav-ofx" class="sub"></span></span>
+          <span id="nav-ofx-dot" class="dot"></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" id="support">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
+          <span class="tx"><b>Поддержка и вопросы</b><span class="sub">частые вопросы, тарифы, чат с нами</span></span>
+          <span id="sup-dot" class="dot live" style="display:none"></span>
+          <span class="chev"></span>
+        </button>
+      </div>
+
+      <span class="label section">Оформление</span>
+      <div class="card pad">
+        <div class="seg" id="theme-seg">
+          <button data-theme-pick="dark">Тёмная</button>
+          <button data-theme-pick="light">Светлая</button>
+        </div>
+      </div>
+
+      <span class="label section autohide-label">Приложение</span>
+      <div class="card pad autohide">
+        <div class="stack">
+        <label class="sw ios-only"><input type="checkbox" id="keep-alive" /><i></i>
+          <span class="lbl"><b>Держать VPN включённым</b>
+            <span>iOS сама переподключит после перезагрузки, смены сети или обрыва</span></span></label>
+        <label class="sw"><input type="checkbox" id="autostart" /><i></i>
+          <span class="lbl"><b>Запускать вместе с системой</b><span>свёрнутым в трей</span></span></label>
+        <label class="sw"><input type="checkbox" id="tray-on-close" /><i></i>
+          <span class="lbl"><b>Крестик сворачивает в трей</b><span>иначе закрытие окна рвёт соединение</span></span></label>
+        <label class="sw"><input type="checkbox" id="start-min" /><i></i>
+          <span class="lbl"><b>Запускать свёрнутым</b><span>окно не откроется при старте</span></span></label>
+        <label class="sw"><input type="checkbox" id="auto-update" /><i></i>
+          <span class="lbl"><b>Обновляться автоматически</b>
+            <span>новая версия ставится сама, когда соединение выключено</span></span></label>
+        </div>
+      </div>
+
+      <span class="label section">Подписка, туннель, журнал</span>
+      <details class="card pad fold" id="sub-fold">
+        <summary>Подписка</summary>
+        <div class="stack">
+        <div id="sub-card" class="subinfo"></div>
+        <label class="fld">Ссылка на подписку</label>
+        <input id="sub-input" type="text" spellcheck="false" placeholder="https://sub.vpnushka.lol/sub/XXXXXXXX" />
+        <div class="row2">
+          <button id="save-sub" class="btn primary wide">Сохранить</button>
+          <button id="sub-refresh" class="btn wide">Обновить</button>
+        </div>
+        <button id="sub-open" class="btn wide">Открыть страницу подписки</button>
+        <div class="ctl sub-auto">
+          <span class="lbl"><b>Обновлять автоматически</b><span id="sub-auto-at">список серверов, трафик и срок подписки</span></span>
+          <select id="sub-auto">
+            <option value="0">выключено</option>
+            <option value="30">каждые 30 минут</option>
+            <option value="60">каждый час</option>
+            <option value="180">каждые 3 часа</option>
+            <option value="360">каждые 6 часов</option>
+            <option value="720">каждые 12 часов</option>
+            <option value="1440">раз в сутки</option>
+          </select>
+        </div>
+        </div>
+      </details>
+
+      <details class="card pad fold" id="tech">
+        <summary>Технические настройки туннеля</summary>
+        <div class="stack">
+          <div>
+            <div class="cap">Фрагментация TLS</div>
+            <div class="seg small" id="frag-mode">
+              <button data-frag="off">Выкл</button>
+              <button data-frag="tls">По пакетам</button>
+              <button data-frag="record">По TLS-записям</button>
+            </div>
+            <div class="fld-row" id="frag-delay-row">
+              <label class="fld">Задержка отката</label>
+              <input id="frag-delay" type="text" spellcheck="false" placeholder="500ms" />
+            </div>
+            <div class="hint">Делит TLS-рукопожатие на части — помогает, если соединение с сервером рвётся на старте.
+              «По пакетам» — деление на TCP-сегменты, «по TLS-записям» — деление самой записи TLS
+              (быстрее, но помогает не везде). Каждое рукопожатие становится чуть медленнее.</div>
+          </div>
+
+          <div class="hr"></div>
+          <div>
+            <div class="cap">Мультиплексирование (Mux)</div>
+            <label class="sw"><input type="checkbox" id="mux-on" /><i></i>
+              <span class="lbl"><b>Включить mux</b><span>много соединений в одном — меньше рукопожатий</span></span></label>
+            <div class="grid2">
+              <div><label class="fld">Протокол</label>
+                <select id="mux-proto"><option value="smux">smux</option><option value="yamux">yamux</option><option value="h2mux">h2mux</option></select></div>
+              <div><label class="fld">Соединений</label><input id="mux-conn" type="number" min="0" max="64" /></div>
+              <div><label class="fld">Мин. потоков</label><input id="mux-min" type="number" min="0" max="128" /></div>
+              <div><label class="fld">Макс. потоков</label><input id="mux-max" type="number" min="0" max="128" /></div>
+            </div>
+            <label class="sw"><input type="checkbox" id="mux-pad" /><i></i>
+              <span class="lbl"><b>Заполнение (padding)</b><span>выравнивает размеры пакетов</span></span></label>
+            <label class="sw"><input type="checkbox" id="mux-brutal" /><i></i>
+              <span class="lbl"><b>TCP Brutal</b><span>своё управление скоростью; нужен и на сервере</span></span></label>
+            <div class="grid2">
+              <div><label class="fld">Вверх, Мбит/с</label><input id="mux-up" type="number" min="1" max="1000" /></div>
+              <div><label class="fld">Вниз, Мбит/с</label><input id="mux-down" type="number" min="1" max="1000" /></div>
+            </div>
+            <div class="hint">На серверах с XTLS Vision mux не применяется — ядро не разрешает их вместе,
+              такие серверы продолжают работать как обычно.</div>
+          </div>
+
+          <div class="hr"></div>
+          <div class="grid2">
+            <div><label class="fld">Отпечаток TLS (uTLS)</label>
+              <select id="tls-fp">
+                <option value="">по умолчанию</option>
+                <option value="chrome">chrome</option><option value="firefox">firefox</option>
+                <option value="safari">safari</option><option value="edge">edge</option>
+                <option value="ios">ios</option><option value="android">android</option>
+                <option value="random">random</option>
+              </select></div>
+            <div><label class="fld">UDP в VLESS</label>
+              <select id="packet-enc">
+                <option value="">по умолчанию</option>
+                <option value="xudp">xudp</option><option value="packetaddr">packetaddr</option>
+                <option value="none">выключить</option>
+              </select></div>
+          </div>
+
+          <div class="hr"></div>
+          <div>
+            <div class="cap">Виртуальный адаптер (TUN)</div>
+            <div class="grid2">
+              <div><label class="fld">MTU</label><input id="tun-mtu" type="number" min="0" max="9000" placeholder="по умолчанию" /></div>
+              <div><label class="fld">Сетевой стек</label>
+                <select id="tun-stack"><option value="mixed">mixed</option><option value="system">system</option><option value="gvisor">gvisor</option></select></div>
+            </div>
+            <label class="sw"><input type="checkbox" id="tun-strict" /><i></i>
+              <span class="lbl"><b>Строгая маршрутизация</b><span>весь трафик только через тоннель</span></span></label>
+          </div>
+
+          <div class="hr"></div>
+          <div>
+            <div class="cap">DNS</div>
+            <div class="grid2">
+              <div><label class="fld">Через тоннель</label>
+                <select id="dns-remote">
+                  <option value="">по умолчанию</option>
+                  <option value="tls://1.1.1.1">Cloudflare (DoT)</option>
+                  <option value="tls://8.8.8.8">Google (DoT)</option>
+                  <option value="tls://94.140.14.14">AdGuard (DoT)</option>
+                  <option value="tls://9.9.9.9">Quad9 (DoT)</option>
+                </select></div>
+              <div><label class="fld">Напрямую</label>
+                <select id="dns-local">
+                  <option value="">по умолчанию</option>
+                  <option value="udp://77.88.8.8">Яндекс</option>
+                  <option value="udp://1.1.1.1">Cloudflare</option>
+                  <option value="udp://8.8.8.8">Google</option>
+                </select></div>
+            </div>
+            <div><label class="fld">Стратегия адресов</label>
+              <select id="dns-strategy">
+                <option value="">по умолчанию</option>
+                <option value="ipv4_only">только IPv4</option>
+                <option value="prefer_ipv4">сначала IPv4</option>
+                <option value="prefer_ipv6">сначала IPv6</option>
+                <option value="ipv6_only">только IPv6</option>
+              </select></div>
+          </div>
+
+          <div class="hr"></div>
+          <div class="hint">Ядро клиента — sing-box, поэтому здесь его настройки. Знакомые по
+            XRay-клиентам «количество пакетов», «длина фрагмента» и «шумы» — это настройки другого
+            ядра; их роль тут играют фрагментация TLS (по пакетам или по записям) и заполнение
+            (padding) в mux.</div>
+          <button id="tech-reset" class="btn wide">Сбросить технические настройки</button>
+          <div class="hint">Меняется конфигурация ядра sing-box — применяется при следующем подключении.</div>
+        </div>
+      </details>
+
+      <details class="card pad fold">
+        <summary>Журнал подключения</summary>
+        <div class="stack">
+          <pre id="logbox" class="logbox"></pre>
+          <div class="row2">
+            <button id="log-refresh" class="btn wide">Обновить</button>
+            <button id="log-clear" class="btn wide">Очистить</button>
+          </div>
+          <button id="log-folder" class="btn wide">Открыть папку с журналом</button>
+        </div>
+      </details>
+
+
+      <div class="card pad about">
+        <div class="cap">О программе</div>
+        <div class="kv"><span>Версия</span><b id="about-ver">—</b></div>
+        <div class="kv"><span>Ядро</span><b>sing-box 1.14</b></div>
+        <div class="kv"><span>Система</span><b id="about-os">—</b></div>
+        <div class="kv"><span>Данные</span><b id="about-dir" class="path">—</b></div>
+        <div id="upd-status" class="hint"></div>
+        <div class="row2">
+          <button id="check-update" class="btn wide">Обновления</button>
+          <button id="support-about" class="btn wide">Поддержка</button>
+        </div>
+        <button id="docs" class="btn wide">Документы</button>
+        <button id="quit" class="btn danger wide">Выйти из приложения</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── нижняя панель: четыре раздела ─────────────────────────────────── -->
+  <nav id="tabs">
+    <button data-view="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1v-9.5Z"/></svg><span>Главная</span></button>
+    <button data-view="servers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 2.4 14.4 0 17M12 3.5c-2.4 2.6-2.4 14.4 0 17"/></svg><span>Серверы</span></button>
+    <button data-view="account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3"/><path d="M4 7.5V17a2 2 0 0 0 2 2h13a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 1 4 7.5Z"/><circle cx="16" cy="13.5" r="1.1" fill="currentColor" stroke="none"/></svg><span>Кабинет</span><i id="win-acc-dot" class="wdot"></i></button>
+    <button data-view="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Настройки</span></button>
+  </nav>
+
+  <!-- process picker ------------------------------------------------------ -->
+  <div id="sheet-procs" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Запущенные программы<span class="grow"></span><button data-close>×</button></h2>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+        <input id="proc-search" type="text" placeholder="Поиск" spellcheck="false" />
+      </div>
+      <div class="scroll"><div id="proc-list" class="list"></div></div>
+    </div>
+  </div>
+
+  <!-- места для устройств заняты (devices.js) ------------------------------ -->
+  <div id="sheet-devices" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Места для устройств заняты<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll stack">
+        <div id="devfull-lead" class="hint"></div>
+        <div id="devfull-match" class="devmatch" style="display:none">
+          <div id="devfull-match-tx"></div>
+          <button id="devfull-match-go" class="btn primary wide">Заменить</button>
+        </div>
+        <div id="devfull-list" class="devs"></div>
+        <div class="hint">Не получается? Напишите в поддержку — @vpnushka_manager.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- пополнение баланса --------------------------------------------------- -->
+  <div id="sheet-topup" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Пополнить баланс<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll stack">
+        <div id="topup-why" class="hint"></div>
+        <div class="cap">Способ оплаты</div>
+        <div id="topup-methods" class="modes"></div>
+        <div id="topup-options" class="seg small" style="display:none"></div>
+        <div class="cap">Сумма, ₽</div>
+        <input id="topup-amount" type="number" min="1" step="1" inputmode="numeric" placeholder="например, 300" />
+        <div id="topup-quick" class="presets"></div>
+        <div id="topup-limits" class="hint"></div>
+        <button id="topup-go" class="btn primary wide big">Перейти к оплате</button>
+        <div id="topup-msg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <!-- Согласие с документами: при первом запуске и при новой редакции.
+       «Принимаю» включается, только когда текст прочитан до конца. -->
+  <!-- экран входа: после соглашения, пока нет ни аккаунта, ни подписки (auth.js) -->
+  <div id="auth-gate" class="auth-gate" style="display:none">
+    <div class="ag-bg"><i></i></div>
+    <div class="ag-scroll">
+      <div class="ag-top">
+        <img src="brand.png" alt="" class="ag-mark" />
+        <span class="eyebrow">Добро пожаловать</span>
+        <h1 class="ag-title">Вход в <em>ВПНушку</em></h1>
+        <p class="ag-sub">Войдите удобным способом — подписка подключится сама, а нажать останется одну кнопку.</p>
+      </div>
+      <div id="auth-slot"></div>
+      <div id="ag-side" class="ag-side">
+        <div id="ag-guest-slot"></div>
+        <button id="auth-later" class="linkbtn ag-later">Войду позже</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="consent" class="consent" style="display:none">
+    <div class="c-head">
+      <b>Прежде чем начать</b>
+      <span id="c-sub" class="sub">Прочитайте документы до конца — кнопка «Принимаю» станет активной</span>
+      <div class="c-progress"><i id="c-bar"></i></div>
+    </div>
+    <div id="c-body" class="c-body"></div>
+    <div class="c-foot">
+      <div id="c-note" class="hint">Нажимая «Принимаю», вы соглашаетесь с Пользовательским соглашением,
+        Политикой конфиденциальности и Правилами Сервиса.</div>
+      <div class="duo">
+        <button id="c-decline" class="btn">Не принимаю</button>
+        <button id="c-accept" class="btn primary" disabled>Принимаю</button>
+      </div>
+      <button id="c-close" class="btn primary wide" style="display:none">Закрыть</button>
+    </div>
+  </div>
+
+  <script src="policies.js"></script>
+  <script src="consent.js"></script>
+  <script src="ios.js"></script>
+  <script src="app.js"></script>
+  <script src="devices.js"></script>
+  <script src="account.js"></script>
+  <script src="gift.js"></script>
+  <script src="guest.js"></script>
+  <script src="auth.js"></script>
+  <script src="news.js"></script>
+  <script src="invite.js"></script>
+  <script src="support.js"></script>
+  <script src="faq.js"></script>
+</body>
+</html>

@@ -1,11 +1,11 @@
 {
-  "version": "2.0.0",
-  "notes": "Новый вход: сразу после запуска — почта или Telegram на равных, а если Telegram не открывается — 20 минут бесплатно прямо там же. Поддержка в один тап: частые вопросы, все тарифы и чат (журнал прикладывается файлом). Честное «подключено» — только когда сервер реально отвечает. Подписка обновляется сама (раз в час). Мобильные операторы: у каждого устройства свой канал.",
-  "pub_date": "2026-10-05T14:27:36Z",
+  "version": "2.0.1",
+  "notes": "Исправлена регистрация по почте на экране входа.",
+  "pub_date": "2026-10-05T15:01:32Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzkxVlVwWCt0RTNXUmNkQit5emUyaCtpVGJ6eGdmQW0rd1E4SzJiejQ2ditVZCtEeHVuczJPY0FzNVV5WFh0UUpIRXBIY2pKSTFPTVJSaFkzZm0yeWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjEwMDY2CWZpbGU6VlBOVVNIS0FfMi4wLjBfeDY0LXNldHVwLmV4ZQorRlMzbFhtV0x5elROcjVFNHJPME5RN0FMMjArbzRKdjlNY2dWK0xUeE83dWtRU1dmaGJQbFRSQXUwZ2E2bTV2RENud3BkT252TSt1MFJwS1h3NVpDUT09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.0/VPNUSHKA_2.0.0_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093b3gxNDh6MEZ5eUZjMGcxalFFcW5yeW1Sa3pSejJhVERUVDV3ajZZaVZVN2VGZ1ZMRzBDRlRCOTBxbHBqRXl4MGg3b2lDMVlyQmxUUFFkbGFSOHdUN2c0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjEyMDg4CWZpbGU6VlBOVVNIS0FfMi4wLjFfeDY0LXNldHVwLmV4ZQp1YkxDblozanFteGdpM2czMHVOd0IvSTdiUE5PbzlqWXpZZ1gxbVlTZEE4S2QweWkzWnlUTDNtRU1nSmhCbGlEcm1jT1RmWU5oTE56ZUlGdnpNSVlDdz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.1/VPNUSHKA_2.0.1_x64-setup.exe"
     }
   }
 }
