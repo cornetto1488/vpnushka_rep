@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="fonts/fonts.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="android.css" />
+  <link rel="stylesheet" href="ios.css" />
 </head>
 <body>
   <!-- плёночное зерно и сетка на фоне — как на apodmarchuk.ru -->
@@ -450,7 +451,7 @@
             <input id="acc-pass" type="password" placeholder="пароль" autocomplete="current-password" />
             <div id="mail-reg-extra" class="stack" hidden>
               <input id="acc-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
-              <input id="acc-name" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
+              <input id="acc-regname" type="text" maxlength="64" placeholder="как к вам обращаться (необязательно)" autocomplete="nickname" />
               <div class="hint">Пароль — от 8 символов. Регистрируясь, вы принимаете <a href="#" id="mail-docs">правила сервиса</a>.</div>
             </div>
             <button id="acc-login-email" class="btn primary wide big">Войти</button>
@@ -497,6 +498,52 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 5v6h-6"/></svg>
             </button>
           </div>
+        </div>
+
+        <!-- способы входа: к аккаунту из Telegram привязывается почта — один аккаунт, два входа (linkmail.js) -->
+        <div class="card pad logins" id="logins">
+          <div class="cap">Способы входа</div>
+          <div class="lg-row">
+            <span class="am-ico tg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg></span>
+            <span class="tx"><b>Telegram</b><span id="lg-tg-sub" class="sub">—</span></span>
+            <span id="lg-tg-st" class="lg-st"></span>
+          </div>
+          <div class="lg-row">
+            <span class="am-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span>
+            <span class="tx"><b>Почта</b><span id="lg-mail-sub" class="sub">—</span></span>
+            <span id="lg-mail-st" class="lg-st"></span>
+          </div>
+
+          <!-- привязать почту -->
+          <div id="lg-form" class="lg-pane" hidden>
+            <div class="hint">Привяжите почту — и входите в этот же аккаунт и через Telegram, и по почте с паролем. Подписка и баланс общие.</div>
+            <input id="lg-email" type="email" spellcheck="false" placeholder="почта" autocomplete="email" />
+            <input id="lg-pass" type="password" placeholder="пароль, от 8 символов" autocomplete="new-password" />
+            <input id="lg-pass2" type="password" placeholder="пароль ещё раз" autocomplete="new-password" />
+            <button id="lg-link" class="btn primary wide">Привязать почту</button>
+          </div>
+
+          <!-- почта ждёт подтверждения -->
+          <div id="lg-wait" class="lg-pane" hidden>
+            <div class="hint">Мы отправили письмо на <b id="lg-wait-mail"></b> — откройте его и нажмите «Подтвердить почту». Письма нет — проверьте «Спам».</div>
+            <div class="row2">
+              <button id="lg-resend" class="btn wide">Отправить ещё раз</button>
+              <button id="lg-check" class="btn wide">Я подтвердил</button>
+            </div>
+          </div>
+
+          <!-- почта уже у другого аккаунта: код из письма → объединение -->
+          <div id="lg-merge" class="lg-pane" hidden>
+            <div class="hint">Эта почта уже привязана к другому аккаунту ВПНушки. Мы отправили на неё 6-значный код — введите его, чтобы объединить аккаунты в один.</div>
+            <input id="lg-code" type="text" inputmode="numeric" maxlength="6" placeholder="код из письма" autocomplete="one-time-code" />
+            <button id="lg-code-go" class="btn primary wide">Подтвердить код</button>
+          </div>
+          <div id="lg-merge-pick" class="lg-pane" hidden>
+            <div class="hint">Объединяем два аккаунта в один. Баланс сложится, вход будет и через Telegram, и по почте. Выберите, чью подписку оставить:</div>
+            <div id="lg-merge-opts" class="lg-opts"></div>
+            <button id="lg-merge-go" class="btn primary wide" disabled>Объединить</button>
+          </div>
+          <div id="lg-msg" class="msg"></div>
         </div>
 
         <div class="card pad">
@@ -946,13 +993,14 @@
 
   <script src="policies.js"></script>
   <script src="consent.js"></script>
-  <script src="android.js"></script>
+  <script src="ios.js"></script>
   <script src="app.js"></script>
   <script src="devices.js"></script>
   <script src="account.js"></script>
   <script src="gift.js"></script>
   <script src="guest.js"></script>
   <script src="auth.js"></script>
+  <script src="linkmail.js"></script>
   <script src="news.js"></script>
   <script src="invite.js"></script>
   <script src="support.js"></script>

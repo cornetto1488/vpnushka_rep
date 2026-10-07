@@ -29,6 +29,15 @@ const API_TEXT = [
   [/Invalid email or password|Incorrect email or password/i, "неверная почта или пароль"],
   [/Email not verified|verify your email/i, "почта не подтверждена — откройте письмо и нажмите ссылку"],
   [/already registered/i, "эта почта уже зарегистрирована — войдите или восстановите пароль"],
+  [/already have a verified email/i, "к аккаунту уже привязана подтверждённая почта"],
+  [/already linked to your account/i, "эта почта уже привязана к вашему аккаунту"],
+  [/cannot be linked to your account/i, "эту почту нельзя привязать"],
+  [/Invalid confirmation code/i, "неверный код — проверьте письмо"],
+  [/Too many invalid attempts/i, "слишком много неверных кодов — начните заново"],
+  [/No pending account merge|Please start again/i, "время на объединение вышло — начните заново"],
+  [/no longer available to merge/i, "этот аккаунт уже нельзя объединить"],
+  [/Merge token is invalid|already consumed/i, "время на объединение вышло — начните заново"],
+  [/Email is already verified/i, "почта уже подтверждена"],
   [/Disposable email/i, "временные почтовые ящики не принимаются"],
   [/cannot be used for registration/i, "эту почту нельзя использовать для регистрации"],
   [/Password login not configured/i, "у этого аккаунта нет пароля — войдите через Telegram или нажмите «Забыли пароль?»"],
@@ -219,7 +228,7 @@ async function registerEmail(email, password) {
   btn.disabled = true;
   try {
     const body = { email, password, language: "ru" };
-    const name = el("acc-name").value.trim();
+    const name = el("acc-regname").value.trim();
     if (name) body.first_name = name.slice(0, 64);
     const r = await rawApi("POST", "/auth/email/register/standalone", body);
     if (r.status !== 200 && r.status !== 201) throw new Error(apiText(r));
@@ -424,6 +433,7 @@ function paintHomeAccount() {
 }
 
 function paintAccount() {
+  if (typeof paintLogins === "function") setTimeout(paintLogins, 0);
   el("acc-out").style.display = acc ? "none" : "";
   el("acc-in").style.display = acc ? "" : "none";
   paintHomeAccount();

@@ -1,11 +1,11 @@
 {
-  "version": "2.0.2",
-  "notes": "Способы входа: привяжите почту к аккаунту Telegram (Кабинет → Способы входа) — один аккаунт, вход и через Telegram, и по почте.",
-  "pub_date": "2026-10-05T17:15:12Z",
+  "version": "2.0.3",
+  "notes": "Исправлено: в режиме «Авто» приложение могло выбрать сервер «Устойчивый» (XHTTP), который в части сетей рвётся под нагрузкой — сайты переставали открываться. Теперь автовыбор берёт только надёжные подключения, «Устойчивый» можно выбрать вручную.",
+  "pub_date": "2026-10-07T09:55:29Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzYyaTRQb0NkN2dTSUVKMVhJbkM0Z2JFZkJFNjhtRXd0Y1paQTVmL3IwcUY5dzExZHFTY2F0aGpyMngwdVB4KzhieXpBY21YTkJvcG0wQVVRbGo0QWc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMjIwMDQzCWZpbGU6VlBOVVNIS0FfMi4wLjJfeDY0LXNldHVwLmV4ZQpUd0ptcnB1SERyemZMQ0Fuend5amVta0UwSVBCOC9YRGlFU0oxMGlyTzhFSzA5SDhIZXdCWmJPWWxSTWU4dGQzT1dGeUZpeTEycjJuT0lmazE4ZmNCZz09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.2/VPNUSHKA_2.0.2_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzRZZTh4NTBkaE5hM1FQUWYvMGpUVGF4VnNXSTNiUXg4WGhETGxZaE1lVUl2Y1p5YjQwdlRMTzRJQ0pXQjExODM2MkRGdlVnc0htTStoSUF5bnVlZ1EwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMzY2NDQ2CWZpbGU6VlBOVVNIS0FfMi4wLjNfeDY0LXNldHVwLmV4ZQpUaFo5YkRpRlFRVHI1QkFFQk4rbEw3TDhEaTBVdGFldXNxZDN2Uk9Pa2lVLzJpU2JkQzNEYm9URWh1VHE2ZHJpbkxmMmRjUnlCSlRRS00wS2FRTzBDQT09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.3/VPNUSHKA_2.0.3_x64-setup.exe"
     }
   }
 }
