@@ -1,7 +1,7 @@
 {
   "version": "2.0.4",
-  "notes": "Обновление приложения",
-  "pub_date": "2026-10-08T09:23:09Z",
+  "notes": "Быстрое подключение к выбранному серверу, «Устойчивый» снова в автовыборе, на телефонах исправлены Telegram и Яндекс.Карты (IPv6), правила с .рф",
+  "pub_date": "2026-10-08T09:23:30Z",
   "sha256": "464b3ab08e7976bd4207c65ac567a933efc378ee5c23777872068add5158fae6",
   "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.4/VPNUSHKA_2.0.4_android.apk"
 }
