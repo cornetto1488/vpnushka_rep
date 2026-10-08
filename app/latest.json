@@ -1,11 +1,11 @@
 {
-  "version": "2.0.3",
-  "notes": "Исправлено: в режиме «Авто» приложение могло выбрать сервер «Устойчивый» (XHTTP), который в части сетей рвётся под нагрузкой — сайты переставали открываться. Теперь автовыбор берёт только надёжные подключения, «Устойчивый» можно выбрать вручную.",
-  "pub_date": "2026-10-07T09:55:29Z",
+  "version": "2.0.4",
+  "notes": "Обновление приложения",
+  "pub_date": "2026-10-08T09:23:09Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzRZZTh4NTBkaE5hM1FQUWYvMGpUVGF4VnNXSTNiUXg4WGhETGxZaE1lVUl2Y1p5YjQwdlRMTzRJQ0pXQjExODM2MkRGdlVnc0htTStoSUF5bnVlZ1EwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxMzY2NDQ2CWZpbGU6VlBOVVNIS0FfMi4wLjNfeDY0LXNldHVwLmV4ZQpUaFo5YkRpRlFRVHI1QkFFQk4rbEw3TDhEaTBVdGFldXNxZDN2Uk9Pa2lVLzJpU2JkQzNEYm9URWh1VHE2ZHJpbkxmMmRjUnlCSlRRS00wS2FRTzBDQT09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.3/VPNUSHKA_2.0.3_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093by81K2dTSWFaSDNGdkdKNGY1ai9ub1VvMEpWcDEwV29YOTV1UFpFSDB3S0VJMnFyekRWVUJBbTAvUXFDVk02cGUrYUU5YVBLV2JoSFc1cERPbllPWXc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNDUwNTU4CWZpbGU6VlBOVVNIS0FfMi4wLjRfeDY0LXNldHVwLmV4ZQo5SjdGaEszZW1RTnc2amFvaThiRUFseUh6OHJkVnZnTjBoWng5VEh1cXlFUlhBQncyYTdETW1JU3o4YmRtTUtJb2Y0K3JhbDlQVzlkbUJyUVhRZTlBUT09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.4/VPNUSHKA_2.0.4_x64-setup.exe"
     }
   }
 }

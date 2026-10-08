@@ -1,7 +1,7 @@
 {
-  "version": "2.0.3",
-  "notes": "Исправлено: в режиме «Авто» приложение могло выбрать сервер «Устойчивый» (XHTTP), который в части сетей рвётся под нагрузкой — сайты переставали открываться. Теперь автовыбор берёт только надёжные подключения, «Устойчивый» можно выбрать вручную.",
-  "pub_date": "2026-10-07T09:55:29Z",
-  "sha256": "ea494ca298157048303f6c46e61c32130236df7b2924f45f524fae68e59e2303",
-  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.3/VPNUSHKA_2.0.3_android.apk"
+  "version": "2.0.4",
+  "notes": "Обновление приложения",
+  "pub_date": "2026-10-08T09:23:09Z",
+  "sha256": "464b3ab08e7976bd4207c65ac567a933efc378ee5c23777872068add5158fae6",
+  "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.4/VPNUSHKA_2.0.4_android.apk"
 }

@@ -321,6 +321,13 @@ async function probeExit() {
   }
 }
 
+// Текущий выбор — группа автовыбора (urltest/fallback), а не конкретный сервер.
+async function pickedIsGroup() {
+  if (!current) return false;
+  const p = await clash("/proxies/" + encodeURIComponent(current)).catch(() => null);
+  return !!(p && /urltest|fallback/i.test(p.type || ""));
+}
+
 // Ждём рабочий выход до limitMs; true — нашёлся.
 async function waitForExit(limitMs) {
   const until = Date.now() + limitMs;
@@ -471,10 +478,19 @@ async function toggleConnection() {
         paintCurrent(); renderList();
       } catch (_) {}
     }
-    // «подключено» — только когда через выход прошёл запрос (канал
-    // «Мобильные операторы» поднимается дольше — ему больше времени)
-    probeMsg = "проверяю сервер…"; tick();
-    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    // Сервер выбран руками — он и будет, ждать замера незачем: «подключено»
+    // сразу, а выход проверяем в фоне (не ответит — «нет связи с сервером»).
+    if (!(await pickedIsGroup())) {
+      setState("on");
+      showEgress();
+      waitForExit(isOfx(current) ? 60000 : 40000).then((ok) => {
+        if (!ok && state === "on") setLinkBad(true);
+      });
+      return;
+    }
+    // Автовыбор: «подключено» — только когда группа нашла рабочий выход
+    probeMsg = "ищу рабочий сервер…"; tick();
+    const ok = await waitForExit(40000);
     if ((await invoke("get_status").catch(() => "on")) === "off") throw new Error(
       (await invoke("last_error").catch(() => "")) || "соединение оборвалось при подключении");
     linkBad = !ok;
@@ -1097,7 +1113,7 @@ const PRESETS = [
   },
   {
     label: "Все российские сайты мимо VPN", kind: "domains", verdict: "direct",
-    items: [".ru", ".рф", ".su"],
+    items: [".ru", ".xn--p1ai", ".su"],   // .рф — ядро видит имена в punycode
   },
   {
     label: "Игры мимо VPN", kind: "apps", verdict: "direct",
@@ -1156,7 +1172,7 @@ function renderRules() {
       row.className = "rule";
       const what = document.createElement("span");
       what.className = "what";
-      what.textContent = item;
+      what.textContent = ruleKind === "domains" ? showDomain(item) : item;
       const vd = document.createElement("span");
       vd.className = "vd " + verdict;
       vd.textContent = VERDICTS[verdict];
@@ -1190,11 +1206,22 @@ function renderRules() {
   el("rule-verdict").style.display = IS_ANDROID && ruleKind === "apps" ? "none" : "";
 }
 
+// Ядро сравнивает домены в punycode (так их несут DNS и TLS): «.рф» как есть
+// не совпал бы ни с чем.
+function asciiDomain(v) {
+  if (!/[^\x00-\x7f]/.test(v)) return v;
+  const dot = v.startsWith(".") ? "." : "";
+  try { return dot + new URL("http://" + v.slice(dot.length)).hostname; } catch (_) { return v; }
+}
+const DOMAIN_SHOW = { ".xn--p1ai": ".рф", "xn--p1ai": "рф", ".xn--p1acf": ".рус", ".xn--d1acj3b": ".дети" };
+const showDomain = (v) => DOMAIN_SHOW[v] || v;
+
 function normalizeRule(kind, raw) {
   let v = (raw || "").trim();
   if (!v) return "";
   if (kind === "domains") {
     v = v.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "").toLowerCase();
+    v = asciiDomain(v);
   } else if (kind === "apps") {
     v = v.split(/[\\/]/).pop();
   } else {
@@ -1865,9 +1892,13 @@ async function syncStatus() {
     // сначала убеждаемся, что выход отвечает, и только потом «подключено»
     setState("connecting");
     await loadServers();
-    probeMsg = "проверяю сервер…"; tick();
-    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    const group = await pickedIsGroup();
+    probeMsg = "ищу рабочий сервер…"; tick();
+    const ok = group ? await waitForExit(40000) : true;
     if ((await invoke("get_status").catch(() => "off")) === "off") { setState("off"); return; }
+    if (!group) waitForExit(isOfx(current) ? 60000 : 40000).then((good) => {
+      if (!good && state === "on") setLinkBad(true);
+    });
     setState("on");
     if (!ok) setLinkBad(true);
     showEgress();
@@ -1897,6 +1928,17 @@ if (listen) {
 (async () => {
   try { prefs = await invoke("get_prefs"); } catch (_) { prefs = {}; }
   try { tweaks = await invoke("get_tweaks"); } catch (_) { tweaks = {}; }
+  // правила с кириллическими доменами (до 2.0.4 «.рф» сохранялся как есть)
+  try {
+    const d = tweaks.routing && tweaks.routing.domains;
+    let fixed = false;
+    for (const v of ["direct", "proxy", "block"]) {
+      if (!d || !Array.isArray(d[v])) continue;
+      const a = d[v].map(asciiDomain);
+      if (a.some((x, i) => x !== d[v][i])) { d[v] = [...new Set(a)]; fixed = true; }
+    }
+    if (fixed) tweaks = await invoke("set_tweaks", { patch: { routing: tweaks.routing } });
+  } catch (_) {}
   setTheme(prefs.theme || "dark");
   paintSubAuto();
   wireConsent();

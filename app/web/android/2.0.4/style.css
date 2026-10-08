@@ -1318,3 +1318,21 @@ html.pc .auth-gate .auth-methods button b { margin-top: 3px; }
 html.pc .auth-gate .am-ico { width: 30px; height: 30px; }
 .ag-side { display: contents; }
 html.pc .auth-gate .ag-side { display: flex; }
+
+/* способы входа (2.0.2) */
+.logins { gap: 10px; }
+.lg-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.lg-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.lg-row .tx b { font-size: 14.5px; }
+.lg-row .tx .sub { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-st { flex: none; min-width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.lg-st.on { color: var(--live); background: color-mix(in srgb, var(--live) 14%, transparent); }
+.lg-st.wait { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.lg-pane { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; border-top: 1px solid var(--line); }
+.lg-pane[hidden] { display: none; }
+.lg-opts { display: flex; flex-direction: column; gap: 8px; }
+.lg-opt { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 12px 14px; text-align: left;
+  border-radius: 14px; border: 1px solid var(--line-2); background: var(--panel-2); color: var(--ink); }
+.lg-opt b { font-size: 14px; }
+.lg-opt span { font-size: 12.5px; color: var(--muted); }
+.lg-opt.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, var(--panel-2)); }
