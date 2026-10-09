@@ -119,9 +119,10 @@
           <div class="ctl">
             <span class="label">Маршрут</span>
             <div class="seg pill" id="home-routes">
-              <button data-pick-route="global">Всё</button>
-              <button data-pick-route="rule">Пресет</button>
-              <button data-pick-route="direct">Напрямую</button>
+              <button data-pick-route="global" title="Всё через VPN">Всё</button>
+              <button data-pick-route="games" title="Игровой: игры напрямую, остальное через VPN">Игры</button>
+              <button data-pick-route="rule" title="Фирменный пресет">Пресет</button>
+              <button data-pick-route="custom" title="Свои правила">Свои</button>
             </div>
           </div>
         </div>
@@ -167,7 +168,7 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
         <span class="tx">
           <b id="exp-title">Подписка заканчивается</b>
-          <span class="sub">продлите в кабинете — пара нажатий</span>
+          <span class="sub">нажмите, чтобы продлить, — пара нажатий</span>
         </span>
         <span class="chev">›</span>
       </button>
@@ -202,7 +203,7 @@
       <div class="seg sup-tabs" id="sup-tabs">
         <button data-sup="faq" class="on">Вопросы</button>
         <button data-sup="prices">Тарифы</button>
-        <button data-sup="chat">Чат<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
+        <button data-sup="chat">Обращения<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
       </div>
 
       <!-- частые вопросы: содержимое в faq.js -->
@@ -211,7 +212,7 @@
         <div class="card pad faq-more">
           <b>Не нашли ответ?</b>
           <span class="hint">Напишите нам — приложим сведения о подключении, чтобы разобраться быстрее.</span>
-          <button class="btn primary wide" data-sup-go="chat">Написать в поддержку</button>
+          <button class="btn primary wide" data-sup-new>Написать в поддержку</button>
         </div>
       </div>
 
@@ -237,26 +238,71 @@
         </div>
       </div>
 
+      <!-- обращения (тикеты бота): список → обращение → новое; support.js -->
       <div id="sup-chat" class="sup-pane" hidden>
-      <div id="sup-list" class="sup-list">
-        <div id="sup-empty" class="hint">Опишите, что случилось: какой сервер, что не открывается, с какого времени. Ответ придёт сюда, в бот и уведомлением.</div>
-      </div>
-      <div class="card sup-form">
-        <div id="sup-login" class="sup-login" style="display:none">
-          <div class="hint">Чтобы написать из приложения, войдите в кабинет — так поддержка сразу увидит вашу подписку. Или напишите в Telegram.</div>
-          <button id="sup-login-btn" class="btn wide">Войти в кабинет</button>
+        <div id="sup-login" class="card pad sup-login" style="display:none">
+          <b>Войдите, чтобы писать из приложения</b>
+          <div class="hint">Так поддержка сразу увидит вашу подписку, а ответы придут сюда, в бот и уведомлением.
+            Без входа — напишите в Telegram.</div>
+          <button id="sup-login-btn" class="btn primary wide">Войти в кабинет</button>
         </div>
-        <div id="sup-form-in" class="sup-form">
-          <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в поддержку…"></textarea>
-          <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
-            <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и последние строки журнала — так быстрее разобраться</span></span></label>
-          <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
-            <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: весь журнал за этот запуск — что делал движок, какие были ошибки</span></span></label>
-          <button id="sup-send" class="btn primary wide">Отправить</button>
-          <div id="sup-status" class="hint"></div>
+
+        <!-- список обращений -->
+        <div id="sup-home" class="sup-screen">
+          <div id="sup-active" class="card pad sup-active" hidden></div>
+          <button id="sup-new-btn" class="btn primary wide" data-sup-new>+ Новое обращение</button>
+          <div class="sup-cap"><span>Мои обращения</span><span id="sup-count" class="hint"></span></div>
+          <div id="sup-tickets" class="sup-tickets"></div>
+          <div id="sup-tickets-empty" class="card pad hint" hidden>Обращений пока нет. Если что-то не работает —
+            создайте обращение: опишите, что случилось, и мы ответим, обычно в течение часа.</div>
         </div>
+
+        <!-- новое обращение -->
+        <div id="sup-new" class="sup-screen" hidden>
+          <button class="sup-back" data-sup-home>‹ Все обращения</button>
+          <div class="card pad sup-form">
+            <b class="sup-title">Новое обращение</b>
+            <div class="cap">Тема</div>
+            <div class="sup-cats" id="sup-cats">
+              <button data-cat="Не подключается VPN">Не подключается</button>
+              <button data-cat="Медленно работает">Медленно</button>
+              <button data-cat="Не открывается сайт или приложение">Не открывается сайт</button>
+              <button data-cat="Оплата и подписка">Оплата и подписка</button>
+              <button data-cat="Другой вопрос">Другое</button>
+            </div>
+            <textarea id="sup-new-text" maxlength="3000" placeholder="Опишите, что случилось: какой сервер, что не открывается, с какого времени…"></textarea>
+            <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
+              <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и подписка — так быстрее разобраться</span></span></label>
+            <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
+              <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: что делал движок и какие были ошибки</span></span></label>
+            <button id="sup-create" class="btn primary wide">Отправить обращение</button>
+            <div id="sup-new-status" class="hint"></div>
+          </div>
+        </div>
+
+        <!-- одно обращение -->
+        <div id="sup-thread" class="sup-screen" hidden>
+          <button class="sup-back" data-sup-home>‹ Все обращения</button>
+          <div class="card pad sup-head">
+            <div class="sup-head-top"><b id="sup-t-title"></b><span id="sup-t-status" class="sup-badge"></span></div>
+            <span id="sup-t-meta" class="hint"></span>
+          </div>
+          <div id="sup-list" class="sup-list"></div>
+          <div id="sup-reply" class="card pad sup-form">
+            <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в это обращение…"></textarea>
+            <label class="sw"><input type="checkbox" id="sup-r-diag" /><i></i>
+              <span class="lbl"><b>Приложить сведения</b><span>версия, сервер, подписка и последние строки журнала</span></span></label>
+            <button id="sup-send" class="btn primary wide">Отправить</button>
+            <div id="sup-status" class="hint"></div>
+          </div>
+          <div id="sup-closed" class="card pad sup-closed" hidden>
+            <b>Обращение закрыто</b>
+            <span class="hint">Писать в закрытое обращение нельзя. Если вопрос остался или появился новый — создайте новое обращение.</span>
+            <button class="btn primary wide" data-sup-new>+ Новое обращение</button>
+          </div>
+        </div>
+
         <button id="sup-tg" class="btn tg wide">Написать в Telegram @vpnushka_manager</button>
-      </div>
       </div>
     </section>
 
@@ -614,24 +660,42 @@
         <div class="modes" id="route-mode">
           <button data-rmode="global">
             <b>Всё через VPN<i>рекомендуем</i></b>
-            <span>в тоннеле весь трафик, кроме ваших исключений «мимо VPN»</span>
+            <span>в тоннеле весь трафик устройства</span>
+          </button>
+          <button data-rmode="games">
+            <b>Игровой</b>
+            <span>всё через VPN, а игры — напрямую, с пингом как без VPN.
+                  Заблокированное в России всё равно идёт через VPN</span>
           </button>
           <button data-rmode="rule">
             <b>Фирменный пресет</b>
             <span>через VPN — зарубежные сервисы и мессенджеры по нашим спискам,
                   остальное напрямую и на полной скорости</span>
           </button>
+          <button data-rmode="custom">
+            <b>Свои правила</b>
+            <span>вы сами решаете, что идёт через VPN, а что мимо, — настраивается ниже</span>
+          </button>
           <button data-rmode="direct">
             <b>Всё напрямую</b>
-            <span>тоннель поднят, но трафик идёт мимо: через VPN пойдёт только то,
-                  что вы добавите в исключения</span>
+            <span>тоннель поднят, но весь трафик идёт мимо него</span>
           </button>
         </div>
         <div class="hint" id="route-base"></div>
       </div>
 
-      <div class="card pad">
-        <div class="cap">Исключения</div>
+      <div class="card pad" id="rules-card">
+        <div class="cap">Свои правила</div>
+        <div class="rules-off" id="rules-off">
+          <span>Правила ниже работают только в режиме «Свои правила». Добавите правило — режим включится сам.</span>
+          <button id="rules-enable" class="btn small">Включить</button>
+        </div>
+        <div class="cap" style="margin-top:2px">Всё, что не в правилах, идёт</div>
+        <div class="seg small" id="custom-base">
+          <button data-base="proxy">через VPN</button>
+          <button data-base="rule">по пресету</button>
+          <button data-base="direct">напрямую</button>
+        </div>
         <div class="hint" id="rule-hint"></div>
         <div class="seg small" id="rule-kind">
           <button data-kind="apps" class="on">Программы</button>
@@ -649,20 +713,54 @@
           <button data-verdict="direct">Мимо VPN</button>
           <button data-verdict="block">Блокировать</button>
         </div>
+        <div class="hint" id="rule-apps-hint" style="display:none">На телефоне приложения управляются целиком:
+          «Мимо VPN» — приложение идёт напрямую; «Через VPN» — в тоннеле будут ТОЛЬКО отмеченные приложения,
+          все остальные пойдут мимо.</div>
         <button id="rule-add" class="btn primary wide">Добавить правило</button>
         <div class="cap" style="margin-top:2px">Готовые наборы</div>
         <div class="presets" id="presets"></div>
         <div id="rule-list" class="rules"></div>
-        <button id="rule-clear" class="btn wide">Очистить все правила</button>
-        <div class="hint">Исключения сильнее режима и фирменного пресета. Применяются при следующем
-          подключении. «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
+        <div class="row2">
+          <button id="rules-share" class="btn wide">Поделиться / импорт</button>
+          <button id="rule-clear" class="btn wide">Очистить все правила</button>
+        </div>
+        <div class="hint">Правила и «всё остальное» применяются при следующем подключении.
+          «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
           (например <code>Telegram.exe</code>).</div>
+      </div>
+          <div class="card pad">
+        <div class="cap">Куда пойдёт сайт?</div>
+        <div class="addrow">
+          <input id="route-check-in" type="text" spellcheck="false" placeholder="youtube.com" />
+          <button id="route-check-btn" class="btn">Проверить</button>
+        </div>
+        <div id="route-check-out" class="hint">Покажет, идёт ли сайт через VPN или напрямую в текущем режиме, и почему.</div>
       </div>
     </section>
 
-    <!-- ── НАСТРОЙКИ ─────────────────────────────────────────────────────── -->
+    <!-- ── НАСТРОЙКИ (перед ним — проверка сайта, см. ниже) ─────────────────────────────────────────────────────── -->
     <section id="view-more" class="view">
       <header class="vhead"><span class="eyebrow">Приложение и туннель</span><h1>Настройки</h1></header>
+
+      <span class="label section">Помощь</span>
+      <div class="group navlist">
+        <button class="row tap" id="support">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
+          <span class="tx"><b>Поддержка</b><span id="support-sub" class="sub">обращения в поддержку, вопросы и тарифы</span></span>
+          <span id="sup-dot" class="dot live" style="display:none"></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" id="diag-open">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+          <span class="tx"><b>Проверить связь</b><span class="sub">что не так и что делать — за полминуты</span></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" id="faq-open">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg></span>
+          <span class="tx"><b>Частые вопросы и тарифы</b><span class="sub">ответы на всё основное и цены</span></span>
+          <span class="chev"></span>
+        </button>
+      </div>
 
       <span class="label section">Подключение</span>
       <div class="card pad">
@@ -690,15 +788,10 @@
           <span id="nav-ofx-dot" class="dot"></span>
           <span class="chev"></span>
         </button>
-        <button class="row tap" id="support">
-          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
-          <span class="tx"><b>Поддержка и вопросы</b><span class="sub">частые вопросы, тарифы, чат с нами</span></span>
-          <span id="sup-dot" class="dot live" style="display:none"></span>
-          <span class="chev"></span>
-        </button>
       </div>
 
-      <span class="label section">Оформление</span>
+
+      <span class="label section">Приложение</span>
       <div class="card pad">
         <div class="seg" id="theme-seg">
           <button data-theme-pick="dark">Тёмная</button>
@@ -706,7 +799,6 @@
         </div>
       </div>
 
-      <span class="label section autohide-label">Приложение</span>
       <div class="card pad autohide">
         <div class="stack">
         <label class="sw ios-only"><input type="checkbox" id="keep-alive" /><i></i>
@@ -724,7 +816,7 @@
         </div>
       </div>
 
-      <span class="label section">Подписка, туннель, журнал</span>
+      <span class="label section">Подписка и для продвинутых</span>
       <details class="card pad fold" id="sub-fold">
         <summary>Подписка</summary>
         <div class="stack">
@@ -915,6 +1007,39 @@
     </div>
   </div>
 
+  <!-- проверка связи (diag.js) --------------------------------------------- -->
+  <div id="sheet-diag" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Проверка связи<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div id="diag-verdict" class="diag-verdict">Проверяю…</div>
+        <div id="diag-list" class="diag-list"></div>
+        <div class="row2">
+          <button id="diag-run" class="btn wide">Проверить ещё раз</button>
+          <button id="diag-send" class="btn primary wide">Отправить в поддержку</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- обмен своими правилами (rulestools.js) ------------------------------- -->
+  <div id="sheet-rules-io" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Набор правил<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div class="cap">Ваши правила — одной строкой</div>
+        <textarea id="rules-io-out" class="rules-io" readonly spellcheck="false"></textarea>
+        <button id="rules-io-copy" class="btn wide">Скопировать</button>
+        <div class="cap" style="margin-top:10px">Добавить чужой набор</div>
+        <textarea id="rules-io-in" class="rules-io" spellcheck="false" placeholder="вставьте строку vpnushka-rules:…"></textarea>
+        <button id="rules-io-import" class="btn primary wide">Добавить правила</button>
+        <div id="rules-io-msg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- места для устройств заняты (devices.js) ------------------------------ -->
   <div id="sheet-devices" class="sheet">
     <div class="scrim" data-close></div>
@@ -1005,5 +1130,7 @@
   <script src="invite.js"></script>
   <script src="support.js"></script>
   <script src="faq.js"></script>
+  <script src="diag.js"></script>
+  <script src="rulestools.js"></script>
 </body>
 </html>

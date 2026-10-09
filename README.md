@@ -1,10 +1,10 @@
-<!-- Шаблон: build/github/README.md в openflux-client. publish.py подставляет 2.0.6 и коммитит при каждом релизе — правьте здесь, а не на GitHub. -->
+<!-- Шаблон: build/github/README.md в openflux-client. publish.py подставляет 2.1.0 и коммитит при каждом релизе — правьте здесь, а не на GitHub. -->
 <p align="center">
   <a href="https://vpnushka.lol"><img src="media/hero.jpg" alt="ВПНушка — VPN, который не отвлекает от прекрасного" width="100%"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/cornetto1488/vpnushka_rep/releases/latest"><img src="https://img.shields.io/badge/версия-2.0.6-ff5a1f?style=for-the-badge&labelColor=17171c" alt="версия 2.0.6"></a>
+  <a href="https://github.com/cornetto1488/vpnushka_rep/releases/latest"><img src="https://img.shields.io/badge/версия-2.1.0-ff5a1f?style=for-the-badge&labelColor=17171c" alt="версия 2.1.0"></a>
   <a href="https://vpnushka.lol"><img src="https://img.shields.io/badge/сайт-vpnushka.lol-f2f0ed?style=for-the-badge&labelColor=17171c" alt="vpnushka.lol"></a>
   <a href="https://t.me/vpnushka_bot"><img src="https://img.shields.io/badge/Telegram-@vpnushka__bot-3be08c?style=for-the-badge&labelColor=17171c" alt="@vpnushka_bot"></a>
 </p>
@@ -17,11 +17,11 @@
 
 | | Платформа | Файл |
 |:-:|---|---|
-| 🪟 | **Windows** 10/11 | [VPNUSHKA_2.0.6_x64-setup.exe](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/VPNUSHKA_2.0.6_x64-setup.exe) |
-| 🤖 | **Android** 8+ | [VPNUSHKA_2.0.6_android.apk](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/VPNUSHKA_2.0.6_android.apk) |
-| 🍏 | **iPhone** | [VPNUSHKA_2.0.6_ios.ipa](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/VPNUSHKA_2.0.6_ios.ipa) |
-| 🐧 | **Ubuntu / Debian** | [VPNUSHKA_2.0.6_amd64.deb](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/VPNUSHKA_2.0.6_amd64.deb) |
-| 🐧 | **Arch Linux** | [vpnushka-2.0.6-1-x86_64.pkg.tar.zst](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/vpnushka-2.0.6-1-x86_64.pkg.tar.zst) |
+| 🪟 | **Windows** 10/11 | [VPNUSHKA_2.1.0_x64-setup.exe](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/VPNUSHKA_2.1.0_x64-setup.exe) |
+| 🤖 | **Android** 8+ | [VPNUSHKA_2.1.0_android.apk](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/VPNUSHKA_2.1.0_android.apk) |
+| 🍏 | **iPhone** | [VPNUSHKA_2.1.0_ios.ipa](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/VPNUSHKA_2.1.0_ios.ipa) |
+| 🐧 | **Ubuntu / Debian** | [VPNUSHKA_2.1.0_amd64.deb](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/VPNUSHKA_2.1.0_amd64.deb) |
+| 🐧 | **Arch Linux** | [vpnushka-2.1.0-1-x86_64.pkg.tar.zst](https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/vpnushka-2.1.0-1-x86_64.pkg.tar.zst) |
 
 Все версии — в [релизах](https://github.com/cornetto1488/vpnushka_rep/releases). Тот же список на сайте: [vpnushka.lol/#download](https://vpnushka.lol/#download).
 

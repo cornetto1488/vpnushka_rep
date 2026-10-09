@@ -1,11 +1,11 @@
 {
-  "version": "2.0.6",
-  "notes": "Проверка связи одной кнопкой (Настройки → Проверить связь): что не так и что делать, с отправкой отчёта в поддержку. «Куда пойдёт сайт?» — показывает, идёт ли сайт через VPN или напрямую и почему. Свои правила можно отправить другу одной строкой и добавить чужие. DNS больше не зависит от автовыбора сервера. Android: «через VPN только эти приложения», режим на виджете, кнопка «Продлить» в напоминании о подписке.",
-  "pub_date": "2026-10-09T13:20:34Z",
+  "version": "2.1.0",
+  "notes": "Поддержка по обращениям: все ваши обращения списком со статусами («Ждёт ответа», «Есть ответ», «Закрыто»), у каждого своя переписка, новое обращение — с выбором темы. Закрытые обращения остаются для истории, писать в них нельзя. Настройки перестроены: «Помощь» (поддержка, проверка связи, частые вопросы) наверху, дальше подключение, приложение и расширенные.",
+  "pub_date": "2026-10-09T13:48:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzk5dWEzeTVqRkhTK2U1bHFGVzEvb2NSdWJvUU9ldldqSzZJcWphbTRmSEplbmdoZG1kMjJpdUwrbFNXK2c2WWZHYWkxWGdwTVRXUk5tN2ZIQ2xjNHc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTUxNzA4CWZpbGU6VlBOVVNIS0FfMi4wLjZfeDY0LXNldHVwLmV4ZQprZFhGLzJWMElRTkdWaE1VUEZaUm53UXVIa2lQRW9ISDlKdlI5dUpuY3pkbWEwMXo0WDdOZ1VhRFpqbTk3Tk4wa21UeWtmakMyZnNuYng4VkRGUUNBZz09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.0.6/VPNUSHKA_2.0.6_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzlCdGdFNmYzL1M1Qzd1RDJXY0VPSUExSE43ZjliSWE1RktLR3ovY1RMcW9yeW9PMU1DUXRtdVFZZFNEdThRdS9aaU1DWUN2SzNNTE0rWjBCcVY0ZXdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTUzMzY0CWZpbGU6VlBOVVNIS0FfMi4xLjBfeDY0LXNldHVwLmV4ZQpxRWpXWldWWjh4Sk9Lb1JZNmkzRGQyM1J1M0xVbHU0cXphVVkzaWdJd0ladTY2YXlCZEdCS2V5ZW1xY3JabVExK1RCNkkzVmNLVGJJaGkyUmhXWFdCdz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.0/VPNUSHKA_2.1.0_x64-setup.exe"
     }
   }
 }
