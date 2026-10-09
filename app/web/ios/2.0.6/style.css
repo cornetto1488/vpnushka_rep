@@ -1336,3 +1336,33 @@ html.pc .auth-gate .ag-side { display: flex; }
 .lg-opt b { font-size: 14px; }
 .lg-opt span { font-size: 12.5px; color: var(--muted); }
 .lg-opt.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, var(--panel-2)); }
+
+/* «Свои правила» вне своего режима: видно, но приглушено, и сказано почему */
+.rules-off { display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  font-size: 12.5px; line-height: 1.45; color: var(--ink); background: var(--acc-soft);
+  border: 1px solid var(--acc); border-radius: 12px; padding: 10px 12px; }
+.rules-off .btn { flex: none; }
+#rules-card.dim > :not(.rules-off):not(.cap:first-child) { opacity: .6; }
+#rules-card.dim > :not(.rules-off):not(.cap:first-child):hover { opacity: 1; }
+
+/* проверка связи (diag.js) */
+.diag-verdict { font-size: 14px; line-height: 1.45; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--panel-2, var(--panel)); margin-bottom: 10px; }
+.diag-verdict.ok { border-color: var(--live); }
+.diag-verdict.warn { border-color: var(--warn); }
+.diag-verdict.bad { border-color: var(--bad); }
+.diag-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.diag-row { display: flex; gap: 10px; align-items: flex-start; }
+.diag-row .diag-tx { display: flex; flex-direction: column; min-width: 0; }
+.diag-row .diag-tx b { font-size: 13px; }
+.diag-row .diag-tx .sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.diag-ico { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: var(--line-2); }
+.diag-row.wait .diag-ico { animation: blink .9s ease-in-out infinite; background: var(--acc); }
+.diag-row.ok .diag-ico { background: var(--live); }
+.diag-row.warn .diag-ico { background: var(--warn); }
+.diag-row.bad .diag-ico { background: var(--bad); }
+/* обмен правилами */
+.rules-io { width: 100%; min-height: 70px; resize: vertical; font: 11px var(--mono); color: var(--ink);
+  background: var(--panel-3); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin: 6px 0; }
+.hint.ok { color: var(--live); }
+.hint.warn { color: var(--warn); }

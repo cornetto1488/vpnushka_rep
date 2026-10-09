@@ -39,16 +39,19 @@ let ruleKind = "apps";
 let ruleVerdict = "proxy";
 
 const VERDICTS = { proxy: "Через VPN", direct: "Мимо VPN", block: "Блокировать" };
-const ROUTE_MODES = { Rule: "Фирменный пресет", Global: "Всё через VPN", Direct: "Напрямую" };
-// Что писать в «Исключениях» при каждом режиме — иначе кажется, будто правило
-// нужно заводить на каждую программу.
+const ROUTE_MODES = { Global: "Всё через VPN", Games: "Игровой", Rule: "Фирменный пресет",
+                      Direct: "Всё напрямую", Custom: "Свои правила" };
+const ROUTE_ORDER = ["Global", "Games", "Rule", "Custom", "Direct"];
+// «Свои правила»: что делать со всем, что правилами не задано (tweaks.customBase)
+const CUSTOM_BASES = { proxy: "через VPN", rule: "по фирменному пресету", direct: "напрямую" };
+// из какого режима пришли — такое «остальное» и оставляем, чтобы ничего не поменялось
+const BASE_OF_MODE = { Global: "proxy", Games: "proxy", Rule: "rule", Direct: "direct" };
+// Подсказка над правилами: сами правила действуют только в «Своих правилах».
 const RULE_HINTS = {
-  Global: "Сейчас в тоннеле всё. Добавляйте сюда только то, что должно ходить МИМО VPN — "
-        + "банк-клиент, госуслуги, игры.",
-  Rule:   "Сейчас работает фирменный пресет. Добавляйте сюда то, что он не покрывает: "
-        + "«через VPN» — если сайт не открывается, «мимо VPN» — если наоборот тормозит.",
-  Direct: "Сейчас трафик идёт мимо тоннеля. Добавляйте сюда то, что должно ходить ЧЕРЕЗ VPN — "
-        + "остальное останется напрямую.",
+  proxy:  "Остальное идёт через VPN — добавляйте сюда то, что должно ходить МИМО: банк-клиент, госуслуги, игры.",
+  rule:   "Остальное — по фирменному пресету. Добавляйте то, что он не покрывает: «через VPN» — если сайт "
+        + "не открывается, «мимо VPN» — если наоборот тормозит.",
+  direct: "Остальное идёт напрямую — добавляйте сюда то, что должно ходить ЧЕРЕЗ VPN.",
 };
 // Человеческие имена списков, которые отдаёт подписка.
 const SET_NAMES = {
@@ -125,10 +128,17 @@ function paintFlag(node, name) {
 const cleanName = (n) =>
   (n || "").replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D\s]+/u, "").trim() || (n || "");
 // канал OpenFlux; в панели он называется «📱 Мобильные операторы»
+// селектор DNS через тоннель (connect/dnsroute.go): при ручном выборе — тот же
+// сервер, при автовыборе — свой автовыбор без XHTTP
+const DNS_SEL = "🌐 DNS", DNS_AUTO = "🌐 DNS · авто";
 const isOfx = (n) => /openflux|мобильн/i.test(n || "");
 const byName = (n) => servers.find((s) => s.name === n);
 
 async function clash(path, opts) {
+  // без срока ответа запрос, оборванный засыпанием телефона, висел вечно — и
+  // с ним всё подключение или проверка статуса
+  opts = Object.assign({}, opts);
+  if (!opts.signal && typeof AbortSignal !== "undefined" && AbortSignal.timeout) opts.signal = AbortSignal.timeout(15000);
   const r = await fetch(CLASH + path, opts);
   if (!r.ok) throw new Error("clash " + r.status);
   return r.status === 204 ? null : r.json();
@@ -321,11 +331,21 @@ async function probeExit() {
   }
 }
 
-// Ждём рабочий выход до limitMs; true — нашёлся.
-async function waitForExit(limitMs) {
+// Текущий выбор — группа автовыбора (urltest/fallback), а не конкретный сервер.
+async function pickedIsGroup() {
+  if (!current) return false;
+  const p = await clash("/proxies/" + encodeURIComponent(current)).catch(() => null);
+  return !!(p && /urltest|fallback/i.test(p.type || ""));
+}
+
+// Ждём рабочий выход до limitMs; true — нашёлся. gen — номер попытки
+// подключения: отменили или начали новую — ждать больше нечего.
+async function waitForExit(limitMs, gen) {
   const until = Date.now() + limitMs;
   for (let n = 0; Date.now() < until; n++) {
+    if (gen && gen !== connGen) return false;
     const r = await probeExit();
+    if (gen && gen !== connGen) return false;
     if (r.ok) return true;
     probeMsg = r.isGroup ? "ищу рабочий сервер…" : "сервер не отвечает, пробую ещё…";
     tick();
@@ -372,7 +392,7 @@ function setState(s) {
   el("power-label").textContent =
     s === "on" ? "VPN включён" : s === "connecting" ? "Подключаю…" : "VPN выключен";
   el("power").title =
-    s === "on" ? "Нажмите, чтобы отключиться" : s === "connecting" ? "" : "Нажмите, чтобы подключиться";
+    s === "on" ? "Нажмите, чтобы отключиться" : s === "connecting" ? "Нажмите, чтобы отменить" : "Нажмите, чтобы подключиться";
   el("canvas").className = "canvas " + s;
   if (s !== "on") { linkBad = false; document.documentElement.classList.remove("link-bad"); }
   if (s !== "connecting") probeMsg = "";
@@ -409,7 +429,7 @@ function tick() {
     sub.textContent = linkBad ? "сервер не отвечает — подождите или выберите другой"
       : liveExitAuto ? "автовыбор: самый быстрый сейчас" : "сервер выбран вручную";
   } else if (state === "connecting") {
-    sub.textContent = probeMsg || "пара секунд";
+    sub.textContent = (probeMsg || "пара секунд") + " · нажмите, чтобы отменить";
     el("m-time").textContent = "00:00";
   } else {
     el("m-time").textContent = "00:00";
@@ -420,13 +440,28 @@ setInterval(tick, 1000);
 
 on(el("power"), "click", () => toggleConnection());
 
+// Номер попытки подключения. Отмена или новая попытка его меняют — и всё, что
+// прежняя ещё ждала (движок, замер выхода), видит, что она уже не нужна.
+let connGen = 0;
+let stopping = false;          // гасим движок — syncStatus не должен принять его за «включён не кнопкой»
+const CANCELLED = "подключение отменено";
+
+async function stopEngine() {
+  stopping = true;
+  try { await invoke("disconnect"); } catch (e) { say(errText(e), true); }
+  finally { stopping = false; }
+}
+
 async function toggleConnection() {
-  if (state === "connecting") return;
   if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
-  if (state === "on") {
+  if (state === "on" || state === "connecting") {
+    // во время подключения кнопка — «передумал»: отменяем
+    const cancel = state === "connecting";
+    connGen++;
     autoRetry = 0;
     setState("off");
-    try { await invoke("disconnect"); } catch (e) { say(errText(e), true); }
+    await stopEngine();
+    if (cancel) say(CANCELLED);
     await loadServers();
     return;
   }
@@ -437,6 +472,8 @@ async function toggleConnection() {
     return;
   }
   const guest = guestActive();
+  const gen = ++connGen;
+  const live = () => { if (gen !== connGen) throw new Error(CANCELLED); };
   setState("connecting");
   try {
     await invoke("connect", {
@@ -444,9 +481,14 @@ async function toggleConnection() {
       server: guest ? null : current || null,
       mode: prefs.mode === "proxy" ? "proxy" : "tun",
     });
+    // отменили, пока телефон спрашивал разрешение или снимал конфиг документа, —
+    // движок успел стартовать уже после нашего disconnect: гасим ещё раз
+    if (gen !== connGen && state === "off") await stopEngine();
+    live();
     let up = false;
     for (let i = 0; i < 90 && !up; i++) {      // the engine fetches the subscription first
       try { await clash("/proxies"); up = true; } catch { await new Promise((r) => setTimeout(r, 400)); }
+      live();
       if ((await invoke("get_status")) === "off" && i > 4) break;   // it died on the way up
     }
     // Saying "connected" when the engine gave up leaves the customer browsing
@@ -456,6 +498,7 @@ async function toggleConnection() {
       const why = await invoke("last_error").catch(() => "");
       throw new Error(why || "не удалось подключиться — подробности в журнале (Настройки → Журнал)");
     }
+    live();
     const want = guest ? null : current;
     if (guest) await clash("/configs", { method: "PATCH", headers: { "content-type": "application/json" },
                                          body: JSON.stringify({ mode: "Rule" }) }).catch(() => {});
@@ -464,17 +507,27 @@ async function toggleConnection() {
     // ядро могло поднять прошлый выбор из своего кеша — ставим тот, что выбран
     if (want && selectorName && current !== want && byName(want) && !isOfx(want) === !isOfx(current)) {
       try {
-        await clash("/proxies/" + encodeURIComponent(selectorName), {
-          method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: want }),
-        });
+        await switchSelector(want);
         current = want;
         paintCurrent(); renderList();
       } catch (_) {}
     }
-    // «подключено» — только когда через выход прошёл запрос (канал
-    // «Мобильные операторы» поднимается дольше — ему больше времени)
-    probeMsg = "проверяю сервер…"; tick();
-    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    // Сервер выбран руками — он и будет, ждать замера незачем: «подключено»
+    // сразу, а выход проверяем в фоне (не ответит — «нет связи с сервером»).
+    const group = await pickedIsGroup();
+    live();
+    if (!group) {
+      setState("on");
+      showEgress();
+      waitForExit(isOfx(current) ? 60000 : 40000, gen).then((ok) => {
+        if (!ok && state === "on" && gen === connGen) setLinkBad(true);
+      });
+      return;
+    }
+    // Автовыбор: «подключено» — только когда группа нашла рабочий выход
+    probeMsg = "ищу рабочий сервер…"; tick();
+    const ok = await waitForExit(40000, gen);
+    live();
     if ((await invoke("get_status").catch(() => "on")) === "off") throw new Error(
       (await invoke("last_error").catch(() => "")) || "соединение оборвалось при подключении");
     linkBad = !ok;
@@ -482,6 +535,7 @@ async function toggleConnection() {
     if (!ok) { linkBad = false; setLinkBad(true); }
     showEgress();
   } catch (e) {
+    if (gen !== connGen) return;        // отменили — кнопка уже всё сделала
     setState("off");
     if (!handleDeviceLimit(errText(e), true)) say(errText(e), true);   // devices.js
     loadLog();
@@ -819,23 +873,52 @@ async function choose(name) {
     return;
   }
   if (state === "connecting") { say("сервер выбран: " + cleanName(name) + " — применится после подключения"); return; }
-  if (selectorName) {
+  if (state === "on" && !selectorName) {
+    await loadServers().catch(() => {});   // имя селектора потерялось — берём заново
+    current = name;                         // loadServers ставит тот, что в ядре сейчас
+    paintCurrent();
+  }
+  if (state === "on" && selectorName) {
     try {
-      await clash("/proxies/" + encodeURIComponent(selectorName), {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
-      });
+      await switchSelector(name);
+      if (current !== name) { current = name; paintCurrent(); renderList(); }   // перечитали список, пока ждали ядро
       say("сервер переключён: " + cleanName(name));
       invoke("set_tray_state", { on: true, server: name }).catch(() => {});
       // iPhone поднимает тоннель заново (смена сети) со своей копией выбора
       if (T.platform === "ios") invoke("remember_server", { server: name }).catch(() => {});
       showEgress();
-    } catch (e) { say(errText(e), true); }
+    } catch (e) {
+      say(errText(e), true);
+      await loadServers().catch(() => {});   // показываем тот сервер, что в ядре на самом деле
+    }
   } else {
     say("сервер выбран: " + cleanName(name));
   }
   tick();
+}
+
+// Переключение на ходу. Селектор ядра меняет выход только для НОВЫХ
+// соединений: уже открытые (Telegram, вкладки браузера, игры, проверка IP с
+// keep-alive) продолжали идти через прежний сервер — со стороны «не
+// переключилось». Поэтому: ставим, проверяем, что встал, и рвём старые
+// соединения — приложения тут же переоткрывают их через новый сервер.
+async function switchSelector(name) {
+  const path = "/proxies/" + encodeURIComponent(selectorName);
+  const put = () => clash(path, { method: "PUT", headers: { "content-type": "application/json" },
+                                  body: JSON.stringify({ name }) });
+  await put();
+  // DNS — за тем же сервером (или за своим автовыбором, если выбрана группа)
+  const p = await clash("/proxies/" + encodeURIComponent(name)).catch(() => null);
+  const dnsTo = p && /urltest|fallback|selector/i.test(p.type || "") ? DNS_AUTO : name;
+  await clash("/proxies/" + encodeURIComponent(DNS_SEL), { method: "PUT", headers: { "content-type": "application/json" },
+                                                         body: JSON.stringify({ name: dnsTo }) }).catch(() => {});
+  const now = await clash(path).then((p) => p && p.now).catch(() => name);
+  if (now !== name) {
+    await put();
+    const again = await clash(path).then((p) => p && p.now).catch(() => name);
+    if (again !== name) throw new Error("ядро не переключилось на " + cleanName(name) + " — попробуйте ещё раз");
+  }
+  await clash("/connections", { method: "DELETE" }).catch(() => {});
 }
 
 async function loadInfo() {
@@ -854,7 +937,7 @@ async function loadServers() {
     try {
       const data = await clash("/proxies");
       const all = Object.values(data.proxies || {});
-      const sel = all.find((p) => p.type === "Selector");
+      const sel = all.find((p) => p.type === "Selector" && p.name !== DNS_SEL && p.name !== "GLOBAL");
       if (sel) {
         selectorName = sel.name;
         liveType = {};
@@ -1097,7 +1180,7 @@ const PRESETS = [
   },
   {
     label: "Все российские сайты мимо VPN", kind: "domains", verdict: "direct",
-    items: [".ru", ".рф", ".su"],
+    items: [".ru", ".xn--p1ai", ".su"],   // .рф — ядро видит имена в punycode
   },
   {
     label: "Игры мимо VPN", kind: "apps", verdict: "direct",
@@ -1141,7 +1224,7 @@ async function applyPreset(p) {
   }
   ruleKind = p.kind;
   document.querySelectorAll("#rule-kind button").forEach((x) => x.classList.toggle("on", x.dataset.kind === p.kind));
-  await saveRouting();
+  await saveRouting(true);
   say("добавлено правил: " + added + " (" + VERDICTS[p.verdict].toLowerCase() + ")");
 }
 
@@ -1156,7 +1239,7 @@ function renderRules() {
       row.className = "rule";
       const what = document.createElement("span");
       what.className = "what";
-      what.textContent = item;
+      what.textContent = ruleKind === "domains" ? showDomain(item) : item;
       const vd = document.createElement("span");
       vd.className = "vd " + verdict;
       vd.textContent = VERDICTS[verdict];
@@ -1187,14 +1270,31 @@ function renderRules() {
   el("rule-pick").style.display = ruleKind === "apps" ? "" : "none";
   // На Android приложение можно только вывести из VPN (список VpnService):
   // ядро не видит, от какой программы пришло соединение.
-  el("rule-verdict").style.display = IS_ANDROID && ruleKind === "apps" ? "none" : "";
+  // iPhone приложения не различает вовсе; Android — только целиком: мимо VPN
+  // или «только эти через VPN» (VpnService), блокировать приложение нельзя
+  const phoneApps = IS_ANDROID && ruleKind === "apps";
+  el("rule-verdict").style.display = phoneApps && T.platform !== "android" ? "none" : "";
+  el("rule-verdict").querySelector('[data-verdict="block"]').style.display = phoneApps ? "none" : "";
+  if (phoneApps && ruleVerdict === "block") el("rule-verdict").querySelector('[data-verdict="direct"]').click();
+  el("rule-apps-hint").style.display = phoneApps && T.platform === "android" ? "" : "none";
 }
+
+// Ядро сравнивает домены в punycode (так их несут DNS и TLS): «.рф» как есть
+// не совпал бы ни с чем.
+function asciiDomain(v) {
+  if (!/[^\x00-\x7f]/.test(v)) return v;
+  const dot = v.startsWith(".") ? "." : "";
+  try { return dot + new URL("http://" + v.slice(dot.length)).hostname; } catch (_) { return v; }
+}
+const DOMAIN_SHOW = { ".xn--p1ai": ".рф", "xn--p1ai": "рф", ".xn--p1acf": ".рус", ".xn--d1acj3b": ".дети" };
+const showDomain = (v) => DOMAIN_SHOW[v] || v;
 
 function normalizeRule(kind, raw) {
   let v = (raw || "").trim();
   if (!v) return "";
   if (kind === "domains") {
     v = v.replace(/^https?:\/\//i, "").replace(/\/.*$/, "").replace(/^www\./i, "").toLowerCase();
+    v = asciiDomain(v);
   } else if (kind === "apps") {
     v = v.split(/[\\/]/).pop();
   } else {
@@ -1203,10 +1303,12 @@ function normalizeRule(kind, raw) {
   return v;
 }
 
-async function saveRouting() {
+async function saveRouting(added) {
   try {
     tweaks = await invoke("set_tweaks", { patch: { routing: routing() } });
     renderRules();
+    if (added && await enterCustom("включён режим «Свои правила» — правила работают в нём"
+                                   + (state === "on" ? "; применятся при следующем подключении" : ""))) return;
     if (state === "on") say("правила применятся при следующем подключении");
   } catch (e) { say(errText(e), true); }
 }
@@ -1219,16 +1321,17 @@ on(el("rule-add"), "click", () => {
     const i = list.indexOf(v);
     if (i >= 0) list.splice(i, 1);          // one verdict per entry
   }
-  bucket(ruleKind, IS_ANDROID && ruleKind === "apps" ? "direct" : ruleVerdict).push(v);
+  bucket(ruleKind, IS_ANDROID && ruleKind === "apps" && (T.platform !== "android" || ruleVerdict === "block")
+    ? "direct" : ruleVerdict).push(v);
   el("rule-input").value = "";
-  saveRouting();
+  saveRouting(true);
 });
 on(el("rule-clear"), "click", async () => {
   tweaks.routing = { apps: { direct: [], proxy: [], block: [] },
                      domains: { direct: [], proxy: [], block: [] },
                      ips: { direct: [], proxy: [], block: [] } };
   await saveRouting();
-  say("правила очищены — остался режим и фирменный пресет");
+  say("правила очищены — всё идёт " + CUSTOM_BASES[customBase()]);
 });
 on(el("rule-input"), "keydown", (e) => { if (e.key === "Enter") el("rule-add").click(); });
 
@@ -1285,15 +1388,21 @@ on(el("rule-pick"), "click", async () => {
 // "весь трафик через сервер" toggle any more — having two was what made it look
 // as if every app needed its own rule.
 async function applyRouteMode(mode, quiet) {
+  if (!ROUTE_MODES[mode]) mode = "Global";
+  const before = prefs.routeMode;
   savePrefs({ routeMode: mode });
-  // the engine starts the next session in this mode (clash_api.default_mode)
-  invoke("set_tweaks", { patch: { routeMode: mode } }).then((t) => { tweaks = t; }).catch(() => {});
-  document.querySelectorAll("#route-mode button").forEach((b) => b.classList.toggle("on", b.dataset.rmode === mode.toLowerCase()));
-  el("rule-hint").textContent = RULE_HINTS[mode] || "";
-  el("nav-route").textContent = ROUTE_MODES[mode] || "";
-  paintBaseline();
-  paintHomeControls();
-  paintQuick();
+  // the engine starts the next session in this mode (clash_api.default_mode);
+  // Android читает его же, решая, какие приложения вывести из тоннеля
+  const saved = invoke("set_tweaks", { patch: { routeMode: mode } }).then((t) => { tweaks = t; }).catch(() => {});
+  paintRouteMode();
+  if (state === "on" && !quiet && T.platform === "android" && before !== mode && phoneAppsDiffer(before, mode)) {
+    // список приложений мимо VPN задаётся при поднятии тоннеля — на ходу его не сменить
+    await saved;
+    say("режим: " + ROUTE_MODES[mode] + " — переподключаюсь, чтобы применить его к приложениям…");
+    await toggleConnection();
+    await toggleConnection();
+    return;
+  }
   if (state === "on") {
     try {
       await clash("/configs", {
@@ -1307,15 +1416,62 @@ async function applyRouteMode(mode, quiet) {
     say("режим сохранён: " + ROUTE_MODES[mode]);
   }
 }
-document.querySelectorAll("#route-mode button").forEach((b) => on(b, "click", () => {
-  const map = { rule: "Rule", global: "Global", direct: "Direct" };
-  applyRouteMode(map[b.dataset.rmode]);
+const modeOf = (key) => ROUTE_ORDER.find((m) => m.toLowerCase() === key);
+document.querySelectorAll("#route-mode button").forEach((b) => on(b, "click", () => applyRouteMode(modeOf(b.dataset.rmode))));
+
+// Android выводит приложения из тоннеля сам: в «Игровом» — игры, в «Своих
+// правилах» — то, что человек отправил «мимо VPN».
+function phoneAppsDiffer(a, b) {
+  const apps = routing().apps || {};
+  const set = (m) => m === "Games" ? "games"
+    : m === "Custom" && ((apps.direct || []).length || (apps.proxy || []).length) ? "custom" : "";
+  return set(a) !== set(b);
+}
+
+function customBase() {
+  const b = tweaks.customBase;
+  return CUSTOM_BASES[b] ? b : "proxy";
+}
+
+function paintRouteMode() {
+  const mode = prefs.routeMode || "Global";
+  document.querySelectorAll("#route-mode button").forEach((b) => b.classList.toggle("on", modeOf(b.dataset.rmode) === mode));
+  const base = customBase();
+  document.querySelectorAll("#custom-base button").forEach((b) => b.classList.toggle("on", b.dataset.base === base));
+  el("rule-hint").textContent = RULE_HINTS[base];
+  el("rules-off").style.display = mode === "Custom" ? "none" : "";
+  el("rules-card").classList.toggle("dim", mode !== "Custom");
+  el("nav-route").textContent = ROUTE_MODES[mode] || "";
+  paintBaseline();
+  paintHomeControls();
+  paintQuick();
+}
+
+// Правило добавили не в «Своих правилах» — переходим в них, а «остальное»
+// берём от прежнего режима: что работало, то и работает, плюс новое правило.
+async function enterCustom(why) {
+  const mode = prefs.routeMode || "Global";
+  if (mode === "Custom") return false;
+  if (BASE_OF_MODE[mode] && BASE_OF_MODE[mode] !== tweaks.customBase) {
+    tweaks = await invoke("set_tweaks", { patch: { customBase: BASE_OF_MODE[mode] } }).catch(() => tweaks);
+  }
+  await applyRouteMode("Custom", true);
+  say(why || "включён режим «Свои правила»");
+  return true;
+}
+
+on(el("rules-enable"), "click", () => enterCustom());
+document.querySelectorAll("#custom-base button").forEach((b) => on(b, "click", async () => {
+  await saveTweaks({ customBase: b.dataset.base });
+  paintRouteMode();
+  say("всё, что не в правилах, — " + CUSTOM_BASES[customBase()]
+      + (state === "on" ? ". Применится при следующем подключении" : ""));
 }));
 
 function paintHomeControls() {
   const mode = prefs.mode === "proxy" ? "proxy" : "tun";
   document.querySelectorAll("[data-pick-mode]").forEach((b) => b.classList.toggle("on", b.dataset.pickMode === mode));
-  const rm = String(prefs.routeMode || "Global").toLowerCase();
+  const rm = String(prefs.routeMode || "Global").toLowerCase();   // во «Всё напрямую» не горит ни одна
   document.querySelectorAll("[data-pick-route]").forEach((b) => b.classList.toggle("on", b.dataset.pickRoute === rm));
 }
 document.querySelectorAll("[data-pick-mode]").forEach((b) => on(b, "click", () => {
@@ -1336,6 +1492,8 @@ function paintBaseline() {
   const mode = prefs.routeMode || "Global";
   box.textContent = mode === "Rule"
     ? "Фирменный пресет: через VPN — " + (via || "—") + "; напрямую — " + (direct || "—") + "."
+    : mode === "Games" ? "Игровой: игры (Steam, Epic, Riot, Battle.net, Wargaming, мобильные и др.) напрямую, "
+      + "остальное через VPN; " + (via || "заблокированное") + " — через VPN всегда."
     : "В фирменном пресете через VPN шли бы: " + (via || "—") + ".";
 }
 
@@ -1400,8 +1558,7 @@ async function setConnMode(next) {
 
 on(el("q-mode"), "click", () => setConnMode(prefs.mode === "proxy" ? "tun" : "proxy"));
 on(el("q-route"), "click", () => {
-  const order = ["Rule", "Global", "Direct"];
-  applyRouteMode(order[(order.indexOf(prefs.routeMode || "Global") + 1) % 3]);
+  applyRouteMode(ROUTE_ORDER[(ROUTE_ORDER.indexOf(prefs.routeMode || "Global") + 1) % ROUTE_ORDER.length]);
 });
 on(el("q-frag"), "click", () => {
   const order = ["off", "tls", "record"];
@@ -1522,8 +1679,13 @@ on(el("packet-enc"), "change", () => saveTweaks({ packetEncoding: el("packet-enc
 })));
 on(el("tech-reset"), "click", async () => {
   try {
+    // сбрасываем технику, а не маршрутизацию: правила и режим остаются
+    // (на ПК и Android натив стирал и их, на iPhone — нет)
+    const keep = { routing: tweaks.routing, routeMode: prefs.routeMode || "Global", customBase: tweaks.customBase };
     tweaks = await invoke("reset_tweaks");
+    tweaks = await invoke("set_tweaks", { patch: JSON.parse(JSON.stringify(keep)) }).catch(() => tweaks);
     paintTech();
+    paintRouteMode();
     renderRules();
     say("технические настройки сброшены");
   } catch (e) { say(errText(e), true); }
@@ -1857,17 +2019,31 @@ async function refreshProfile() {
 // The engine can outlive the window (or die on its own), so the truth is what
 // get_status sees: a live child process or an answering Clash API.
 async function syncStatus() {
-  if (state === "connecting") return;
+  if (state === "connecting" || stopping || syncStatus.busy) return;
+  syncStatus.busy = true;
+  try { await syncStatusOnce(); } finally { syncStatus.busy = false; }
+}
+async function syncStatusOnce() {
   let s = "off";
   try { s = await invoke("get_status"); } catch (_) {}
+  if (state === "connecting" || stopping) return;     // пока спрашивали, нажали кнопку
   if (s === "on" && state !== "on") {
-    // движок подняли не кнопкой (автозапуск, плитка, iOS On Demand) — тоже
-    // сначала убеждаемся, что выход отвечает, и только потом «подключено»
+    // движок подняли не кнопкой (автозапуск, плитка, iOS On Demand) или окно
+    // пересоздали, пока приложение было свёрнуто, — тоже сначала убеждаемся,
+    // что выход отвечает, и только потом «подключено»
+    const gen = ++connGen;
     setState("connecting");
     await loadServers();
-    probeMsg = "проверяю сервер…"; tick();
-    const ok = await waitForExit(isOfx(current) ? 60000 : 40000);
+    if (gen !== connGen) return;
+    const group = await pickedIsGroup();
+    probeMsg = "ищу рабочий сервер…"; tick();
+    const ok = group ? await waitForExit(40000, gen) : true;
+    if (gen !== connGen) return;                      // отменили кнопкой
     if ((await invoke("get_status").catch(() => "off")) === "off") { setState("off"); return; }
+    if (gen !== connGen) return;
+    if (!group) waitForExit(isOfx(current) ? 60000 : 40000, gen).then((good) => {
+      if (!good && state === "on" && gen === connGen) setLinkBad(true);
+    });
     setState("on");
     if (!ok) setLinkBad(true);
     showEgress();
@@ -1880,6 +2056,23 @@ async function syncStatus() {
     if (T.platform !== "android" && T.platform !== "ios") autoReconnect("соединение оборвалось");
   }
 }
+
+// вернулись в приложение — сразу сверяемся с тоннелем, не ждём таймера
+// (на телефоне таймеры в фоне стоят, а тоннель мог подняться или упасть)
+document.addEventListener("visibilitychange", async () => {
+  if (document.hidden) return;
+  syncStatus();
+  // режим могли сменить с виджета (Android)
+  try {
+    const p = await invoke("get_prefs");
+    if (p && p.routeMode && p.routeMode !== prefs.routeMode) {
+      prefs = p;
+      tweaks = await invoke("get_tweaks").catch(() => tweaks);
+      paintRouteMode();
+    }
+  } catch (_) {}
+  if (state === "on") resolveExit();
+});
 
 if (listen) {
   listen("ofx-log", (e) => {
@@ -1897,6 +2090,17 @@ if (listen) {
 (async () => {
   try { prefs = await invoke("get_prefs"); } catch (_) { prefs = {}; }
   try { tweaks = await invoke("get_tweaks"); } catch (_) { tweaks = {}; }
+  // правила с кириллическими доменами (до 2.0.4 «.рф» сохранялся как есть)
+  try {
+    const d = tweaks.routing && tweaks.routing.domains;
+    let fixed = false;
+    for (const v of ["direct", "proxy", "block"]) {
+      if (!d || !Array.isArray(d[v])) continue;
+      const a = d[v].map(asciiDomain);
+      if (a.some((x, i) => x !== d[v][i])) { d[v] = [...new Set(a)]; fixed = true; }
+    }
+    if (fixed) tweaks = await invoke("set_tweaks", { patch: { routing: tweaks.routing } });
+  } catch (_) {}
   setTheme(prefs.theme || "dark");
   paintSubAuto();
   wireConsent();
@@ -1904,6 +2108,20 @@ if (listen) {
   show("home");
   // до 1.0 режим и «весь трафик» были двумя разными настройками
   if (!prefs.routeMode) await savePrefs({ routeMode: prefs.fullTunnel === false ? "Rule" : "Global" });
+  // до 2.0.5 свои правила действовали в любом режиме, теперь — только в «Своих
+  // правилах». У кого они есть — переводим туда, с «остальным» от прежнего режима.
+  if (!prefs.rulesMigrated) {
+    const r = tweaks.routing || {};
+    const any = ["apps", "domains", "ips"].some((k) => ["proxy", "direct", "block"]
+      .some((v) => ((r[k] || {})[v] || []).length));
+    const mode = prefs.routeMode;
+    if (any && mode !== "Custom") {
+      tweaks = await invoke("set_tweaks", { patch: { customBase: BASE_OF_MODE[mode] || "proxy", routeMode: "Custom" } })
+        .catch(() => tweaks);
+      await savePrefs({ routeMode: "Custom" });
+    }
+    await savePrefs({ rulesMigrated: true });
+  }
   el("auto-connect").checked = !!prefs.autoConnect;
   el("autostart").checked = !!prefs.autostart;
   el("tray-on-close").checked = prefs.trayOnClose !== false;
@@ -1928,6 +2146,11 @@ if (listen) {
   renderRules();
   applyRouteMode(prefs.routeMode || "Global", true);
   setState("off");
+  // Телефон выгружает окно из памяти, пока приложение свёрнуто, и при возврате
+  // оно стартует заново. Статус тоннеля — первым делом: раньше он ждал профиля и
+  // списка серверов (сеть, секунды, а то и вечно), и всё это время на экране
+  // было «VPN выключен», хотя тоннель работал.
+  syncStatus();
 
   try {
     const a = await invoke("app_info");
@@ -1945,10 +2168,10 @@ if (listen) {
     loadSubInfo();
   }
   const link = await invoke("take_deep_link").catch(() => null);
-  if (link) await importLink(link);
+  if (link) await openLink(link);
   // ни аккаунта, ни подписки — сразу экран входа (auth.js); acc грузит account.js
   setTimeout(() => maybeOpenAuth(), 300);
-  await syncStatus();
+  syncStatus();
   setInterval(syncStatus, 3000);
   // дата окончания подписки меняется (продлили) — и по ней напоминания
   setInterval(() => { if (profile && profile.sub) loadSubInfo(); }, 3 * 3600 * 1000);
@@ -1970,6 +2193,20 @@ function linkToSub(link) {
   if (!/^https?:/i.test(s)) { try { s = decodeURIComponent(s); } catch (_) {} }
   s = s.replace(/^(https?):\/*/i, "$1://");   // браузеры иногда съедают косую
   return /^https?:\/\/[^/]+\/./i.test(s) ? s : "";
+}
+
+// vpnushka://renew — кнопка «Продлить» в уведомлении о подписке
+async function openLink(link) {
+  if (/^vpnushka:\/\/renew/i.test(link)) { goRenew(); return; }
+  return importLink(link);
+}
+
+function goRenew() {
+  show("account");
+  setTimeout(() => {
+    const b = el("acc-renew");
+    if (b && b.offsetParent) b.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 400);
 }
 
 async function importLink(link) {
@@ -2002,7 +2239,7 @@ async function importLink(link) {
 }
 
 if (listen) {
-  listen("ofx-deep-link", () => invoke("take_deep_link").then((u) => u && importLink(u)).catch(() => {}));
+  listen("ofx-deep-link", () => invoke("take_deep_link").then((u) => u && openLink(u)).catch(() => {}));
 }
 
 /* ── напоминания об окончании подписки ───────────────────────────────────── */
@@ -2031,7 +2268,7 @@ function remindExpiry(s) {
     : "Израсходовано " + Math.floor(pct) + "% трафика";
   remindTraffic(s, pct);
   const items = [
-    { id: 1, at: end - 3 * DAY, body: "Подписка закончится через 3 дня. Продлить — в приложении, раздел «Кабинет»." },
+    { id: 1, at: end - 3 * DAY, body: "Подписка закончится через 3 дня — продлите, чтобы VPN не отключился." },
     { id: 2, at: end - DAY, body: "Подписка закончится завтра — продлите, чтобы VPN не отключился." },
     { id: 3, at: end, body: "Подписка закончилась. Продлить можно в приложении, раздел «Кабинет»." },
   ];
@@ -2061,7 +2298,7 @@ function remindTraffic(s, pct) {
     : "Израсходовано " + step + "% трафика (" + bytes(s.used) + " из " + bytes(s.total) + ")." }).catch(() => {});
 }
 
-on(el("exp-card"), "click", () => show("account"));
+on(el("exp-card"), "click", goRenew);
 
 /* ── Auto: перевыбор сервера и переподключение ───────────────────────────── */
 // Только при автовыборе (urltest): там клиент волен сменить сервер сам. Если
