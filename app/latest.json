@@ -1,11 +1,11 @@
 {
-  "version": "2.1.1",
-  "notes": "Фирменные шрифты наконец работают во всём приложении. Смена сервера сразу после подключения срабатывает всегда. Поддержка: фото из ответов прямо в переписке, счётчик новых ответов, аккуратные кнопки «Отправить» и Telegram в одну строку. «Проверить связь» показывает итог с одной кнопкой — например, перейти на работающий сервер или продлить подписку. На iPhone в напоминании о подписке появилась кнопка «Продлить».",
-  "pub_date": "2026-10-09T14:20:35Z",
+  "version": "2.1.2",
+  "notes": "Правила режимов теперь видны: во вкладке «Маршрутизация» каждый режим показывает свои встроенные правила списком с замком — что идёт через VPN, что напрямую, в каком порядке. Любой список можно открыть и найти в нём свой сайт.",
+  "pub_date": "2026-10-09T15:39:10Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzN6RVZQcUpmY05pMU91eFBFMU9BNkwzK2RIL2tvS1o3cllCV0JmNkRCUEFwWktOWkcvLzB3dUo5ZVZOT3NxOFJFaG5DK1p4M0ZIWTZZZGdmNGJUNFFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTU1MzE3CWZpbGU6VlBOVVNIS0FfMi4xLjFfeDY0LXNldHVwLmV4ZQorajhMYlphSjZkbC9qUmN2K28zaDdDY1VBbS9LQy9HVUJ6RVlCSkUwMWVDT3lGSFc1b3FqZkhhNmN4Q2JNcXJyQXprb2RvaXZoM2lxd3hzK09RMi9CQT09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.1/VPNUSHKA_2.1.1_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzVoeEEwbldYbk1CZklFdXdUazJvMUk1RFJlZHVCYksxQUpFMU5YRGwxZE5xUkZCU2tqR2JMbFN5aGpXWHlYVld5UDdrN2huSWZQWlgra0dBS1dvaFFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTU5OTkzCWZpbGU6VlBOVVNIS0FfMi4xLjJfeDY0LXNldHVwLmV4ZQpNaGpLcHhRcFFxZndOb0dOU2ZUVmxEUDJNTVdsdjJxb0Z2NHVQME1MNGhQcllpVDNzYTU0TW1Qa0c4bGNsYkJzSVNKT2JTQy9xTDhUSzFNazYxd0tCZz09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.2/VPNUSHKA_2.1.2_x64-setup.exe"
     }
   }
 }

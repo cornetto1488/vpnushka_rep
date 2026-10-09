@@ -933,7 +933,9 @@ async function loadInfo() {
 let subError = "";
 
 async function loadServers() {
-  if (state === "on") {
+  // и во время подключения: движок уже отвечает, а без живого списка не было
+  // имени селектора — выбор сервера сразу после подключения не переключал
+  if (state !== "off") {
     try {
       const data = await clash("/proxies");
       const all = Object.values(data.proxies || {});
@@ -1483,18 +1485,11 @@ document.querySelectorAll("[data-pick-route]").forEach((b) => on(b, "click", () 
   if (t) t.click();
 }));
 
+// Что маршрутизирует сама подписка — теперь видно списком закреплённых
+// правил режима (presetrules.js), а не строкой описания.
 function paintBaseline() {
-  const box = el("route-base");
-  if (!baseline) { box.textContent = ""; return; }
-  const via = setNames(baseline.viaServer);
-  const direct = setNames(baseline.direct);
-  if (!via && !direct) { box.textContent = ""; return; }
-  const mode = prefs.routeMode || "Global";
-  box.textContent = mode === "Rule"
-    ? "Фирменный пресет: через VPN — " + (via || "—") + "; напрямую — " + (direct || "—") + "."
-    : mode === "Games" ? "Игровой: игры (Steam, Epic, Riot, Battle.net, Wargaming, мобильные и др.) напрямую, "
-      + "остальное через VPN; " + (via || "заблокированное") + " — через VPN всегда."
-    : "В фирменном пресете через VPN шли бы: " + (via || "—") + ".";
+  el("route-base").textContent = "";
+  if (typeof renderPresetRules === "function") renderPresetRules();
 }
 
 /* ── preferences & advanced settings ─────────────────────────────────────── */
@@ -1595,6 +1590,7 @@ function paintAdblock() {
 on(el("adblock"), "change", async (e) => {
   const v = e.target.checked;
   await saveTweaks({ adblock: v });
+  paintBaseline();
   if (state === "on") {
     say(v ? "включаю блокировку рекламы — переподключаюсь…" : "выключаю блокировку рекламы — переподключаюсь…");
     await toggleConnection();
@@ -2252,7 +2248,7 @@ const DAY = 86400000;
 function remindExpiry(s) {
   const card = el("exp-card");
   const end = s && s.expire ? s.expire * 1000 : 0;
-  if (!end || guestActive()) {
+  if (!end || (typeof guestActive === "function" && guestActive())) {
     card.style.display = "none";
     if (IS_ANDROID) invoke("schedule_reminders", { items: [] }).catch(() => {});
     return;
@@ -2307,7 +2303,7 @@ on(el("exp-card"), "click", goRenew);
 const PROBE = "&url=" + encodeURIComponent("https://www.gstatic.com/generate_204");
 
 function autoSelected() {
-  return !!current && !guestActive()
+  return !!current && !(typeof guestActive === "function" && guestActive())
     && (liveType[current] === "URLTest" || (info[current] || {}).type === "urltest");
 }
 
