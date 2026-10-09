@@ -63,7 +63,8 @@ async function runDiag() {
   el("diag-send").disabled = true;
   el("diag-run").disabled = true;
   const lines = [];                        // для отчёта в поддержку
-  const problems = [];                     // [важность, совет]
+  const problems = [];                     // [важность, совет, действие: [надпись, fn] | "switch"]
+  let bestAlt = null;                      // самый быстрый живой сервер, кроме текущего
   const put = (row, tone, text, title) => { row(tone, text); lines.push((tone === "ok" ? "✓ " : tone === "warn" ? "! " : "✗ ") + title + ": " + text); };
 
   try {
@@ -71,7 +72,7 @@ async function runDiag() {
     const rSub = diagRow(box, "Подписка");
     if (!profile || !profile.sub) {
       put(rSub, "bad", "не добавлена — войдите в кабинет или вставьте ссылку", "Подписка");
-      problems.push([0, "Нет подписки: войдите в кабинет (вкладка «Кабинет») или вставьте ссылку в Настройки → Подписка."]);
+      problems.push([0, "Нет подписки: войдите в кабинет или вставьте ссылку в Настройки → Подписка.", ["Войти в кабинет", () => show("account")]]);
     } else {
       try {
         const s = await invoke("sub_status");
@@ -79,10 +80,10 @@ async function runDiag() {
         const pct = s.total ? s.used / s.total * 100 : 0;
         if (left <= 0) {
           put(rSub, "bad", "закончилась", "Подписка");
-          problems.push([0, "Подписка закончилась — продлите её в «Кабинете», и VPN заработает."]);
+          problems.push([0, "Подписка закончилась — продлите её, и VPN заработает.", ["Продлить подписку", () => goRenew()]]);
         } else if (pct >= 100) {
           put(rSub, "bad", "трафик израсходован (" + bytes(s.used) + ")", "Подписка");
-          problems.push([0, "Трафик по подписке закончился — продлите или докупите в «Кабинете»."]);
+          problems.push([0, "Трафик по подписке закончился — продлите или докупите его.", ["Продлить подписку", () => goRenew()]]);
         } else {
           put(rSub, left < 3 * 86400000 ? "warn" : "ok", s.expire
             ? "активна, осталось " + Math.max(1, Math.ceil(left / 86400000)) + " дн." + (s.total ? " · трафик " + Math.floor(pct) + "%" : "")
@@ -92,7 +93,7 @@ async function runDiag() {
         const msg = errText(e);
         put(rSub, "warn", "сервер подписок не ответил (" + msg + ")", "Подписка");
         if (typeof DEVICE_LIMIT !== "undefined" && DEVICE_LIMIT.test(msg)) {
-          problems.push([0, "Заняты все места для устройств — освободите место в «Кабинете» → Устройства."]);
+          problems.push([0, "Заняты все места для устройств — освободите место в кабинете.", ["Открыть кабинет", () => show("account")]]);
         }
       }
     }
@@ -101,7 +102,8 @@ async function runDiag() {
     const rTun = diagRow(box, "VPN");
     if (state !== "on") {
       put(rTun, "warn", state === "connecting" ? "подключается…" : "выключен — дальше проверю, когда подключитесь", "VPN");
-      if (!problems.length) problems.push([1, "VPN выключен — нажмите на картину на главной, потом проверьте ещё раз."]);
+      if (!problems.length) problems.push([1, "VPN выключен — подключитесь, и проверка пройдёт до конца.", ["Подключить", async () => {
+        await toggleConnection(); if (state === "on") runDiag(); }]]);
       return finish();
     }
     put(rTun, "ok", "включён · режим «" + (ROUTE_MODES[prefs.routeMode || "Global"] || "—") + "»"
@@ -115,7 +117,7 @@ async function runDiag() {
     if (exitMs) put(rExit, exitMs > 800 ? "warn" : "ok", exitName + " · " + exitMs + " мс", "Сервер");
     else {
       put(rExit, "bad", exitName + " не отвечает", "Сервер");
-      problems.push([0, "Сервер «" + exitName + "» не отвечает — выберите другой в «Серверах» (или «⚡️ Auto»)."]);
+      problems.push([0, "Сервер «" + exitName + "» не отвечает — переключитесь на другой.", "switch"]);
     }
 
     // 4. DNS через тоннель
@@ -124,7 +126,8 @@ async function runDiag() {
       const d = await clash("/dns/query?name=www.google.com&type=A");
       const ok = d && Array.isArray(d.Answer) && d.Answer.length;
       put(rDns, ok ? "ok" : "bad", ok ? "имена определяются" : "имена не определяются", "DNS");
-      if (!ok) problems.push([0, "Не работает DNS — переподключитесь; не поможет — выберите другой сервер."]);
+      if (!ok) problems.push([0, "Не работает DNS — переподключитесь; не поможет — выберите другой сервер.", ["Переподключиться", async () => {
+        await toggleConnection(); await toggleConnection(); }]]);
     } catch (_) {
       put(rDns, "warn", "ядро не дало проверить", "DNS");
     }
@@ -134,8 +137,8 @@ async function runDiag() {
       for (const [title, url] of DIAG_SITES) {
         const r = diagRow(box, title);
         const ms = await diagDelay(exit, url, 8000);
-        put(r, ms ? "ok" : "bad", ms ? "открывается через " + exitName + " · " + ms + " мс" : "не открывается через " + exitName, title);
-        if (!ms) problems.push([1, title + " не открывается через «" + exitName + "» — попробуйте другой сервер."]);
+        put(r, ms ? "ok" : "bad", ms ? "открывается через «" + exitName + "» · " + ms + " мс" : "не открывается через «" + exitName + "»", title);
+        if (!ms) problems.push([1, title + " не открывается через «" + exitName + "» — попробуйте другой сервер.", "switch"]);
       }
     }
 
@@ -147,8 +150,8 @@ async function runDiag() {
     if (!names.length) put(rAll, "warn", "список недоступен", "Другие серверы");
     else put(rAll, alive.length ? "ok" : "bad", "отвечают " + alive.length + " из " + names.length
       + (alive.length ? " · быстрее всех " + cleanName(alive[0][0]) + " (" + alive[0][1] + " мс)" : ""), "Другие серверы");
-    if (names.length && !alive.length) problems.push([0, "Не отвечает ни один сервер — скорее всего, сеть режет VPN. Включите «Мобильные операторы» или фрагментацию (Настройки → Технические)."]);
-    else if (!exitMs && alive.length) problems.push([0, "Выберите «" + cleanName(alive[0][0]) + "» — он сейчас отвечает быстрее всех."]);
+    if (names.length && !alive.length) problems.push([0, "Не отвечает ни один сервер — скорее всего, сеть режет VPN. Поможет канал «Мобильные операторы» или фрагментация (Настройки → Технические).", ["Мобильные операторы", () => show("channel")]]);
+    bestAlt = (alive.find((x) => x[0] !== exit) || [])[0] || null;
 
     if (/турц|turk/i.test(exit || "")) { lines.push("i " + DIAG_TR_NOTE); diagRow(box, "Турция")("warn", DIAG_TR_NOTE); }
   } finally {
@@ -160,9 +163,29 @@ async function runDiag() {
     diagBusy = false;
     problems.sort((a, b) => a[0] - b[0]);
     const v = el("diag-verdict");
-    v.textContent = problems.length ? problems[0][1] : "Всё в порядке: VPN работает, сайты открываются.";
-    v.className = "diag-verdict " + (problems.length ? (problems[0][0] ? "warn" : "bad") : "ok");
-    diagReport = "Проверка связи из приложения\n" + v.textContent + "\n\n" + lines.join("\n");
+    const top = problems[0];
+    const tone = top ? (top[0] ? "warn" : "bad") : "ok";
+    v.className = "diag-verdict big " + tone;
+    v.textContent = "";
+    const ico = document.createElement("span");
+    ico.className = "dv-ico";
+    ico.textContent = tone === "ok" ? "✓" : "!";
+    const h = document.createElement("b");
+    h.textContent = tone === "ok" ? "Всё работает" : tone === "bad" ? "Нашли проблему" : "Есть замечание";
+    const t = document.createElement("span");
+    t.className = "dv-text";
+    t.textContent = top ? top[1] : "VPN подключён, сайты открываются, серверы отвечают.";
+    v.append(ico, h, t);
+    let act = top && top[2];
+    if (act === "switch") act = bestAlt ? ["Перейти на сервер «" + cleanName(bestAlt) + "»", () => { choose(bestAlt); setTimeout(runDiag, 2500); }] : null;
+    if (act) {
+      const b = document.createElement("button");
+      b.className = "btn primary wide";
+      b.textContent = act[0];
+      b.addEventListener("click", () => { if (act[0] !== "Подключить") sheet("sheet-diag", false); act[1](); });
+      v.append(b);
+    }
+    diagReport = "Проверка связи из приложения\n" + t.textContent + "\n\n" + lines.join("\n");
     el("diag-send").disabled = false;
     el("diag-run").disabled = false;
   }

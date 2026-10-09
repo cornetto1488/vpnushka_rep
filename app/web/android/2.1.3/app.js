@@ -35,7 +35,7 @@ let since = 0;              // connected-at, for the session timer
 let liveType = {};          // name -> Clash API type (URLTest = автовыбор), when connected
 let autoRetry = 0, autoTimer = null, watchFails = 0;   // Auto: попытки переподключения
 let stats = { down: 0, up: 0, dRate: 0, uRate: 0, at: 0 };
-let ruleKind = "apps";
+let ruleKind = "domains";
 let ruleVerdict = "proxy";
 
 const VERDICTS = { proxy: "Через VPN", direct: "Мимо VPN", block: "Блокировать" };
@@ -43,15 +43,16 @@ const ROUTE_MODES = { Global: "Всё через VPN", Games: "Игровой", 
                       Direct: "Всё напрямую", Custom: "Свои правила" };
 const ROUTE_ORDER = ["Global", "Games", "Rule", "Custom", "Direct"];
 // «Свои правила»: что делать со всем, что правилами не задано (tweaks.customBase)
-const CUSTOM_BASES = { proxy: "через VPN", rule: "по фирменному пресету", direct: "напрямую" };
+const CUSTOM_BASES = { proxy: "через VPN", games: "как в «Игровом»", rule: "по фирменному пресету", direct: "напрямую" };
 // из какого режима пришли — такое «остальное» и оставляем, чтобы ничего не поменялось
-const BASE_OF_MODE = { Global: "proxy", Games: "proxy", Rule: "rule", Direct: "direct" };
+const BASE_OF_MODE = { Global: "proxy", Games: "games", Rule: "rule", Direct: "direct" };
 // Подсказка над правилами: сами правила действуют только в «Своих правилах».
 const RULE_HINTS = {
   proxy:  "Остальное идёт через VPN — добавляйте сюда то, что должно ходить МИМО: банк-клиент, госуслуги, игры.",
   rule:   "Остальное — по фирменному пресету. Добавляйте то, что он не покрывает: «через VPN» — если сайт "
         + "не открывается, «мимо VPN» — если наоборот тормозит.",
   direct: "Остальное идёт напрямую — добавляйте сюда то, что должно ходить ЧЕРЕЗ VPN.",
+  games:  "Основа — «Игровой»: игры напрямую, остальное через VPN.",
 };
 // Человеческие имена списков, которые отдаёт подписка.
 const SET_NAMES = {
@@ -933,7 +934,9 @@ async function loadInfo() {
 let subError = "";
 
 async function loadServers() {
-  if (state === "on") {
+  // и во время подключения: движок уже отвечает, а без живого списка не было
+  // имени селектора — выбор сервера сразу после подключения не переключал
+  if (state !== "off") {
     try {
       const data = await clash("/proxies");
       const all = Object.values(data.proxies || {});
@@ -1224,52 +1227,62 @@ async function applyPreset(p) {
   }
   ruleKind = p.kind;
   document.querySelectorAll("#rule-kind button").forEach((x) => x.classList.toggle("on", x.dataset.kind === p.kind));
+  sheet("sheet-rule-add", false);
   await saveRouting(true);
   say("добавлено правил: " + added + " (" + VERDICTS[p.verdict].toLowerCase() + ")");
 }
 
+const KIND_TAGS = { apps: "прил.", domains: "сайт", ips: "IP" };
 function renderRules() {
   const box = el("rule-list");
   box.textContent = "";
   let n = 0;
-  for (const verdict of ["proxy", "direct", "block"]) {
-    for (const item of bucket(ruleKind, verdict)) {
-      n++;
-      const row = document.createElement("div");
-      row.className = "rule";
-      const what = document.createElement("span");
-      what.className = "what";
-      what.textContent = ruleKind === "domains" ? showDomain(item) : item;
-      const vd = document.createElement("span");
-      vd.className = "vd " + verdict;
-      vd.textContent = VERDICTS[verdict];
-      const del = document.createElement("button");
-      del.className = "del";
-      del.textContent = "×";
-      del.title = "Удалить правило";
-      del.addEventListener("click", () => {
-        const list = bucket(ruleKind, verdict);
-        list.splice(list.indexOf(item), 1);
-        saveRouting();
-      });
-      row.append(what, vd, del);
-      box.append(row);
+  for (const kind of ["domains", "apps", "ips"]) {
+    for (const verdict of ["proxy", "direct", "block"]) {
+      for (const item of bucket(kind, verdict)) {
+        n++;
+        const row = document.createElement("div");
+        row.className = "rule";
+        const what = document.createElement("span");
+        what.className = "what";
+        what.textContent = kind === "domains" ? showDomain(item) : item;
+        const tag = document.createElement("i");
+        tag.className = "kind";
+        tag.textContent = KIND_TAGS[kind];
+        const vd = document.createElement("span");
+        vd.className = "vd " + verdict;
+        vd.textContent = VERDICTS[verdict];
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "×";
+        del.title = "Удалить правило";
+        del.addEventListener("click", () => {
+          const list = bucket(kind, verdict);
+          list.splice(list.indexOf(item), 1);
+          saveRouting();
+        });
+        row.append(what, tag, vd, del);
+        box.append(row);
+      }
     }
   }
+  el("rule-count").textContent = n ? String(n) : "";
   if (!n) {
     const d = document.createElement("div");
-    d.className = "empty";
-    d.textContent = ruleKind === "apps"
-      ? "Правил нет — все программы идут по общим настройкам"
-      : "Правил нет";
+    d.className = "empty small";
+    d.textContent = "Пока пусто — всё идёт по основе";
     box.append(d);
   }
+  paintRuleAdd();
+}
+
+// окно «Новое правило»: поле и вердикты под выбранный вид
+function paintRuleAdd() {
   el("rule-input").placeholder =
     ruleKind === "apps" ? (IS_ANDROID ? "выберите приложение справа" : "chrome.exe")
       : ruleKind === "domains" ? "youtube.com" : "192.168.1.0/24";
   el("rule-pick").style.display = ruleKind === "apps" ? "" : "none";
-  // На Android приложение можно только вывести из VPN (список VpnService):
-  // ядро не видит, от какой программы пришло соединение.
+  el("rule-exe-hint").style.display = ruleKind === "apps" && !IS_ANDROID ? "" : "none";
   // iPhone приложения не различает вовсе; Android — только целиком: мимо VPN
   // или «только эти через VPN» (VpnService), блокировать приложение нельзя
   const phoneApps = IS_ANDROID && ruleKind === "apps";
@@ -1278,6 +1291,11 @@ function renderRules() {
   if (phoneApps && ruleVerdict === "block") el("rule-verdict").querySelector('[data-verdict="direct"]').click();
   el("rule-apps-hint").style.display = phoneApps && T.platform === "android" ? "" : "none";
 }
+on(el("rule-new"), "click", () => {
+  paintRuleAdd();
+  sheet("sheet-rule-add", true);
+  setTimeout(() => el("rule-input").focus(), 250);
+});
 
 // Ядро сравнивает домены в punycode (так их несут DNS и TLS): «.рф» как есть
 // не совпал бы ни с чем.
@@ -1324,6 +1342,7 @@ on(el("rule-add"), "click", () => {
   bucket(ruleKind, IS_ANDROID && ruleKind === "apps" && (T.platform !== "android" || ruleVerdict === "block")
     ? "direct" : ruleVerdict).push(v);
   el("rule-input").value = "";
+  sheet("sheet-rule-add", false);
   saveRouting(true);
 });
 on(el("rule-clear"), "click", async () => {
@@ -1338,7 +1357,7 @@ on(el("rule-input"), "keydown", (e) => { if (e.key === "Enter") el("rule-add").c
 document.querySelectorAll("#rule-kind button").forEach((b) => on(b, "click", () => {
   document.querySelectorAll("#rule-kind button").forEach((x) => x.classList.toggle("on", x === b));
   ruleKind = b.dataset.kind;
-  renderRules();
+  paintRuleAdd();
 }));
 document.querySelectorAll("#rule-verdict button").forEach((b) => on(b, "click", () => {
   document.querySelectorAll("#rule-verdict button").forEach((x) => x.classList.toggle("on", x === b));
@@ -1423,8 +1442,10 @@ document.querySelectorAll("#route-mode button").forEach((b) => on(b, "click", ()
 // правилах» — то, что человек отправил «мимо VPN».
 function phoneAppsDiffer(a, b) {
   const apps = routing().apps || {};
+  const gamesBase = tweaks.customBase === "games" && !(tweaks.customOff || []).includes("gameApps");
   const set = (m) => m === "Games" ? "games"
-    : m === "Custom" && ((apps.direct || []).length || (apps.proxy || []).length) ? "custom" : "";
+    : m === "Custom" ? ((apps.direct || []).length || (apps.proxy || []).length ? "custom" : "")
+                       + (gamesBase && !(apps.proxy || []).length ? "games" : "") : "";
   return set(a) !== set(b);
 }
 
@@ -1438,9 +1459,10 @@ function paintRouteMode() {
   document.querySelectorAll("#route-mode button").forEach((b) => b.classList.toggle("on", modeOf(b.dataset.rmode) === mode));
   const base = customBase();
   document.querySelectorAll("#custom-base button").forEach((b) => b.classList.toggle("on", b.dataset.base === base));
-  el("rule-hint").textContent = RULE_HINTS[base];
-  el("rules-off").style.display = mode === "Custom" ? "none" : "";
-  el("rules-card").classList.toggle("dim", mode !== "Custom");
+  const custom = mode === "Custom";
+  el("custom-tools").style.display = custom ? "" : "none";
+  el("rules-foot").style.display = custom ? "" : "none";
+  el("rules-enable").style.display = custom ? "none" : "";
   el("nav-route").textContent = ROUTE_MODES[mode] || "";
   paintBaseline();
   paintHomeControls();
@@ -1483,18 +1505,10 @@ document.querySelectorAll("[data-pick-route]").forEach((b) => on(b, "click", () 
   if (t) t.click();
 }));
 
+// Что маршрутизирует сама подписка — теперь видно списком закреплённых
+// правил режима (presetrules.js), а не строкой описания.
 function paintBaseline() {
-  const box = el("route-base");
-  if (!baseline) { box.textContent = ""; return; }
-  const via = setNames(baseline.viaServer);
-  const direct = setNames(baseline.direct);
-  if (!via && !direct) { box.textContent = ""; return; }
-  const mode = prefs.routeMode || "Global";
-  box.textContent = mode === "Rule"
-    ? "Фирменный пресет: через VPN — " + (via || "—") + "; напрямую — " + (direct || "—") + "."
-    : mode === "Games" ? "Игровой: игры (Steam, Epic, Riot, Battle.net, Wargaming, мобильные и др.) напрямую, "
-      + "остальное через VPN; " + (via || "заблокированное") + " — через VPN всегда."
-    : "В фирменном пресете через VPN шли бы: " + (via || "—") + ".";
+  if (typeof renderPresetRules === "function") renderPresetRules();
 }
 
 /* ── preferences & advanced settings ─────────────────────────────────────── */
@@ -1595,6 +1609,7 @@ function paintAdblock() {
 on(el("adblock"), "change", async (e) => {
   const v = e.target.checked;
   await saveTweaks({ adblock: v });
+  paintBaseline();
   if (state === "on") {
     say(v ? "включаю блокировку рекламы — переподключаюсь…" : "выключаю блокировку рекламы — переподключаюсь…");
     await toggleConnection();
@@ -2252,7 +2267,7 @@ const DAY = 86400000;
 function remindExpiry(s) {
   const card = el("exp-card");
   const end = s && s.expire ? s.expire * 1000 : 0;
-  if (!end || guestActive()) {
+  if (!end || (typeof guestActive === "function" && guestActive())) {
     card.style.display = "none";
     if (IS_ANDROID) invoke("schedule_reminders", { items: [] }).catch(() => {});
     return;
@@ -2307,7 +2322,7 @@ on(el("exp-card"), "click", goRenew);
 const PROBE = "&url=" + encodeURIComponent("https://www.gstatic.com/generate_204");
 
 function autoSelected() {
-  return !!current && !guestActive()
+  return !!current && !(typeof guestActive === "function" && guestActive())
     && (liveType[current] === "URLTest" || (info[current] || {}).type === "urltest");
 }
 

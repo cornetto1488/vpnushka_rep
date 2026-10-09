@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="fonts/fonts.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="android.css" />
+  <link rel="stylesheet" href="ios.css" />
 </head>
 <body>
   <!-- плёночное зерно и сетка на фоне — как на apodmarchuk.ru -->
@@ -202,7 +203,7 @@
       <div class="seg sup-tabs" id="sup-tabs">
         <button data-sup="faq" class="on">Вопросы</button>
         <button data-sup="prices">Тарифы</button>
-        <button data-sup="chat">Обращения<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
+        <button data-sup="chat">Обращения<span id="sup-dot-tab" class="sup-tabcount" style="display:none"></span></button>
       </div>
 
       <!-- частые вопросы: содержимое в faq.js -->
@@ -243,13 +244,13 @@
           <b>Войдите, чтобы писать из приложения</b>
           <div class="hint">Так поддержка сразу увидит вашу подписку, а ответы придут сюда, в бот и уведомлением.
             Без входа — напишите в Telegram.</div>
-          <button id="sup-login-btn" class="btn primary wide">Войти в кабинет</button>
+          <div class="sup-actions"><button id="sup-login-btn" class="btn primary small">Войти в кабинет</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
         </div>
 
         <!-- список обращений -->
         <div id="sup-home" class="sup-screen">
           <div id="sup-active" class="card pad sup-active" hidden></div>
-          <button id="sup-new-btn" class="btn primary wide" data-sup-new>+ Новое обращение</button>
+          <div class="sup-actions"><button id="sup-new-btn" class="btn primary small" data-sup-new>+ Новое обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
           <div class="sup-cap"><span>Мои обращения</span><span id="sup-count" class="hint"></span></div>
           <div id="sup-tickets" class="sup-tickets"></div>
           <div id="sup-tickets-empty" class="card pad hint" hidden>Обращений пока нет. Если что-то не работает —
@@ -274,7 +275,7 @@
               <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и подписка — так быстрее разобраться</span></span></label>
             <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
               <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: что делал движок и какие были ошибки</span></span></label>
-            <button id="sup-create" class="btn primary wide">Отправить обращение</button>
+            <div class="sup-actions"><button id="sup-create" class="btn primary small">Отправить обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
             <div id="sup-new-status" class="hint"></div>
           </div>
         </div>
@@ -291,17 +292,16 @@
             <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в это обращение…"></textarea>
             <label class="sw"><input type="checkbox" id="sup-r-diag" /><i></i>
               <span class="lbl"><b>Приложить сведения</b><span>версия, сервер, подписка и последние строки журнала</span></span></label>
-            <button id="sup-send" class="btn primary wide">Отправить</button>
+            <div class="sup-actions"><button id="sup-send" class="btn primary small">Отправить</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
             <div id="sup-status" class="hint"></div>
           </div>
           <div id="sup-closed" class="card pad sup-closed" hidden>
             <b>Обращение закрыто</b>
             <span class="hint">Писать в закрытое обращение нельзя. Если вопрос остался или появился новый — создайте новое обращение.</span>
-            <button class="btn primary wide" data-sup-new>+ Новое обращение</button>
+            <div class="sup-actions"><button class="btn primary small" data-sup-new>+ Новое обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
           </div>
         </div>
 
-        <button id="sup-tg" class="btn tg wide">Написать в Telegram @vpnushka_manager</button>
       </div>
     </section>
 
@@ -655,85 +655,64 @@
       <header class="vhead"><button class="back" data-back title="Назад"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="eyebrow">Что идёт через VPN</span><h1>Маршрутизация</h1></header>
 
       <div class="card pad">
-        <div class="cap">Режим маршрутизации</div>
+        <div class="cap">Режим</div>
         <div class="modes" id="route-mode">
           <button data-rmode="global">
             <b>Всё через VPN<i>рекомендуем</i></b>
-            <span>в тоннеле весь трафик устройства</span>
+            <span>весь трафик устройства идёт через сервер</span>
           </button>
           <button data-rmode="games">
             <b>Игровой</b>
-            <span>всё через VPN, а игры — напрямую, с пингом как без VPN.
-                  Заблокированное в России всё равно идёт через VPN</span>
+            <span>игры напрямую с родным пингом, остальное — через VPN</span>
           </button>
           <button data-rmode="rule">
             <b>Фирменный пресет</b>
-            <span>через VPN — зарубежные сервисы и мессенджеры по нашим спискам,
-                  остальное напрямую и на полной скорости</span>
+            <span>через VPN только заблокированное и мессенджеры, остальное напрямую</span>
           </button>
           <button data-rmode="custom">
             <b>Свои правила</b>
-            <span>вы сами решаете, что идёт через VPN, а что мимо, — настраивается ниже</span>
+            <span>возьмите любой режим за основу и доработайте под себя</span>
           </button>
           <button data-rmode="direct">
             <b>Всё напрямую</b>
-            <span>тоннель поднят, но весь трафик идёт мимо него</span>
+            <span>тоннель поднят, но трафик идёт мимо него</span>
           </button>
         </div>
-        <div class="hint" id="route-base"></div>
       </div>
 
       <div class="card pad" id="rules-card">
-        <div class="cap">Свои правила</div>
-        <div class="rules-off" id="rules-off">
-          <span>Правила ниже работают только в режиме «Свои правила». Добавите правило — режим включится сам.</span>
-          <button id="rules-enable" class="btn small">Включить</button>
+        <div class="rc-head">
+          <div class="cap" id="preset-cap">Правила</div>
+          <button id="route-check-open" class="linkbtn" title="Проверить, куда пойдёт сайт">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.2-3.2"/></svg>
+            Куда пойдёт сайт?</button>
         </div>
-        <div class="cap" style="margin-top:2px">Всё, что не в правилах, идёт</div>
-        <div class="seg small" id="custom-base">
-          <button data-base="proxy">через VPN</button>
-          <button data-base="rule">по пресету</button>
-          <button data-base="direct">напрямую</button>
+
+        <div id="custom-tools">
+          <div class="cap sub">Основа</div>
+          <div class="seg small" id="custom-base">
+            <button data-base="proxy">Всё через VPN</button>
+            <button data-base="games">Игровой</button>
+            <button data-base="rule">Пресет</button>
+            <button data-base="direct">Напрямую</button>
+          </div>
+          <div class="cap sub">Ваши правила <span class="cnt" id="rule-count"></span></div>
+          <div id="rule-list" class="rules"></div>
+          <button id="rule-new" class="btn wide add-rule">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Добавить правило</button>
+          <div class="cap sub" id="base-cap">Из основы</div>
         </div>
-        <div class="hint" id="rule-hint"></div>
-        <div class="seg small" id="rule-kind">
-          <button data-kind="apps" class="on">Программы</button>
-          <button data-kind="domains">Сайты</button>
-          <button data-kind="ips">IP-адреса</button>
+
+        <div id="preset-list" class="rules pins"></div>
+        <div class="hint" id="preset-hint"></div>
+
+        <button id="rules-enable" class="btn wide">Настроить под себя</button>
+
+        <div class="rc-foot" id="rules-foot">
+          <button id="rules-share" class="linkbtn">Поделиться / импорт</button>
+          <button id="rule-clear" class="linkbtn danger">Очистить мои правила</button>
         </div>
-        <div class="addrow">
-          <input id="rule-input" type="text" spellcheck="false" placeholder="chrome.exe" />
-          <button id="rule-pick" class="btn icon" title="Выбрать из запущенных программ">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-        </div>
-        <div class="seg small verdicts" id="rule-verdict">
-          <button data-verdict="proxy" class="on">Через VPN</button>
-          <button data-verdict="direct">Мимо VPN</button>
-          <button data-verdict="block">Блокировать</button>
-        </div>
-        <div class="hint" id="rule-apps-hint" style="display:none">На телефоне приложения управляются целиком:
-          «Мимо VPN» — приложение идёт напрямую; «Через VPN» — в тоннеле будут ТОЛЬКО отмеченные приложения,
-          все остальные пойдут мимо.</div>
-        <button id="rule-add" class="btn primary wide">Добавить правило</button>
-        <div class="cap" style="margin-top:2px">Готовые наборы</div>
-        <div class="presets" id="presets"></div>
-        <div id="rule-list" class="rules"></div>
-        <div class="row2">
-          <button id="rules-share" class="btn wide">Поделиться / импорт</button>
-          <button id="rule-clear" class="btn wide">Очистить все правила</button>
-        </div>
-        <div class="hint">Правила и «всё остальное» применяются при следующем подключении.
-          «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
-          (например <code>Telegram.exe</code>).</div>
-      </div>
-          <div class="card pad">
-        <div class="cap">Куда пойдёт сайт?</div>
-        <div class="addrow">
-          <input id="route-check-in" type="text" spellcheck="false" placeholder="youtube.com" />
-          <button id="route-check-btn" class="btn">Проверить</button>
-        </div>
-        <div id="route-check-out" class="hint">Покажет, идёт ли сайт через VPN или напрямую в текущем режиме, и почему.</div>
       </div>
     </section>
 
@@ -994,6 +973,55 @@
   </nav>
 
   <!-- process picker ------------------------------------------------------ -->
+  <!-- новое правило (app.js) ----------------------------------------------- -->
+  <div id="sheet-rule-add" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Новое правило<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll rule-add">
+        <div class="seg small" id="rule-kind">
+          <button data-kind="domains" class="on">Сайт</button>
+          <button data-kind="apps">Программа</button>
+          <button data-kind="ips">IP-адрес</button>
+        </div>
+        <div class="addrow">
+          <input id="rule-input" type="text" spellcheck="false" placeholder="youtube.com" />
+          <button id="rule-pick" class="btn icon" title="Выбрать из запущенных программ" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+        </div>
+        <div class="seg small verdicts" id="rule-verdict">
+          <button data-verdict="proxy" class="on">Через VPN</button>
+          <button data-verdict="direct">Мимо VPN</button>
+          <button data-verdict="block">Блокировать</button>
+        </div>
+        <div class="hint" id="rule-apps-hint" style="display:none">На телефоне приложения управляются целиком:
+          «Мимо VPN» — приложение идёт напрямую; «Через VPN» — в тоннеле будут ТОЛЬКО отмеченные приложения,
+          все остальные пойдут мимо.</div>
+        <div class="hint desk-only" id="rule-exe-hint" style="display:none">Сопоставляется имя файла программы,
+          например <code>Telegram.exe</code>, — только в режиме TUN.</div>
+        <button id="rule-add" class="btn primary wide">Добавить</button>
+        <div class="cap" style="margin-top:6px">Или готовый набор</div>
+        <div class="presets" id="presets"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- куда пойдёт сайт (rulestools.js) ------------------------------------- -->
+  <div id="sheet-route-check" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Куда пойдёт сайт?<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div class="addrow">
+          <input id="route-check-in" type="text" spellcheck="false" placeholder="youtube.com" />
+          <button id="route-check-btn" class="btn">Проверить</button>
+        </div>
+        <div id="route-check-out" class="hint">Покажет, идёт ли сайт через VPN или напрямую в текущем режиме, и почему.</div>
+      </div>
+    </div>
+  </div>
+
   <div id="sheet-procs" class="sheet">
     <div class="scrim" data-close></div>
     <div class="panel">
@@ -1006,6 +1034,20 @@
     </div>
   </div>
 
+  <!-- содержимое закреплённого списка (presetrules.js) ------------------- -->
+  <div id="sheet-pin" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2><span id="pin-title">Список</span><span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div class="hint" id="pin-sub"></div>
+        <input id="pin-q" type="text" spellcheck="false" placeholder="найти сайт, например youtube.com" />
+        <div id="pin-items" class="pin-items"></div>
+        <div id="pin-none" class="empty" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- проверка связи (diag.js) --------------------------------------------- -->
   <div id="sheet-diag" class="sheet">
     <div class="scrim" data-close></div>
@@ -1015,8 +1057,8 @@
         <div id="diag-verdict" class="diag-verdict">Проверяю…</div>
         <div id="diag-list" class="diag-list"></div>
         <div class="row2">
-          <button id="diag-run" class="btn wide">Проверить ещё раз</button>
-          <button id="diag-send" class="btn primary wide">Отправить в поддержку</button>
+          <button id="diag-run" class="btn small wide">Проверить ещё раз</button>
+          <button id="diag-send" class="btn small wide">Написать в поддержку</button>
         </div>
       </div>
     </div>
@@ -1117,7 +1159,7 @@
 
   <script src="policies.js"></script>
   <script src="consent.js"></script>
-  <script src="android.js"></script>
+  <script src="ios.js"></script>
   <script src="app.js"></script>
   <script src="devices.js"></script>
   <script src="account.js"></script>
@@ -1131,5 +1173,7 @@
   <script src="faq.js"></script>
   <script src="diag.js"></script>
   <script src="rulestools.js"></script>
+  <script src="presetdata.js"></script>
+  <script src="presetrules.js"></script>
 </body>
 </html>

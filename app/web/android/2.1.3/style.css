@@ -33,7 +33,7 @@
   --live: #3be08c;
   --warn: #ffb547;
   --bad: #ff6b5e;
-  --tg: #3aa6e8;
+  --tg: #2aabee;
   --s-down: #f45a24;
   --s-up: #4f87f0;
   --scrim: rgba(0, 0, 0, .62);
@@ -67,7 +67,7 @@ html[data-theme="light"] {
   --live: #0d6e3f;
   --warn: #874e05;
   --bad: #ab2c22;
-  --tg: #1f8fd0;
+  --tg: #229ed9;
   --s-down: #e2480f;
   --s-up: #2f63d6;
   --scrim: rgba(20, 16, 12, .42);
@@ -1338,12 +1338,6 @@ html.pc .auth-gate .ag-side { display: flex; }
 .lg-opt.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, var(--panel-2)); }
 
 /* «Свои правила» вне своего режима: видно, но приглушено, и сказано почему */
-.rules-off { display: flex; align-items: center; gap: 10px; justify-content: space-between;
-  font-size: 12.5px; line-height: 1.45; color: var(--ink); background: var(--acc-soft);
-  border: 1px solid var(--acc); border-radius: 12px; padding: 10px 12px; }
-.rules-off .btn { flex: none; }
-#rules-card.dim > :not(.rules-off):not(.cap:first-child) { opacity: .6; }
-#rules-card.dim > :not(.rules-off):not(.cap:first-child):hover { opacity: 1; }
 
 /* проверка связи (diag.js) */
 .diag-verdict { font-size: 14px; line-height: 1.45; padding: 12px 14px; border-radius: 12px;
@@ -1408,3 +1402,121 @@ html.pc .auth-gate .ag-side { display: flex; }
 .sup-closed { display: flex; flex-direction: column; gap: 8px; text-align: center; }
 .sup-closed[hidden], #sup-reply[hidden], #sup-new-btn[hidden] { display: none; }
 #sup-tickets-empty[hidden] { display: none; }
+
+/* 2.1.1: счётчик на вкладке, подпись поддержки, вложения, переходы */
+.sup-tabcount { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+  margin-left: 6px; padding: 0 5px; border-radius: 999px; background: var(--acc); color: var(--on-acc, #fff);
+  font: 700 10.5px var(--mono); vertical-align: 1px; }
+.sup-msg .sm-who { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.sup-msg .sm-who b { display: inline; margin: 0; font-size: 12px; color: var(--acc-ink); }
+.sup-msg .sm-av { width: 20px; height: 20px; border-radius: 6px; flex: none; }
+.sup-msg .sm-body { display: flex; flex-direction: column; gap: 6px; white-space: pre-wrap; }
+.sup-msg .sm-photo { display: block; max-width: 100%; max-height: 260px; border-radius: 10px; object-fit: cover;
+  cursor: zoom-in; background: var(--panel-3); }
+.sup-msg .sm-file { align-self: flex-start; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line-2);
+  background: transparent; color: var(--ink); font: 500 12.5px var(--display); cursor: pointer; }
+.sup-msg .sm-file:hover { border-color: var(--acc); }
+.sup-screen.slide-in { animation: supIn .28s var(--e-out, ease-out); }
+.sup-screen.slide-back { animation: supBack .28s var(--e-out, ease-out); }
+@keyframes supIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes supBack { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sup-screen.slide-in, .sup-screen.slide-back { animation: none; } }
+
+/* «Проверить связь» 2.1.1: итог крупной карточкой с одним действием, строки — по очереди */
+.diag-verdict.big { display: grid; grid-template-columns: 44px 1fr; column-gap: 12px; row-gap: 4px; align-items: center;
+  padding: 16px; border-width: 1.5px; }
+.diag-verdict.big .dv-ico { grid-row: span 2; width: 44px; height: 44px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font: 700 22px var(--display); color: var(--bg); background: var(--muted); }
+.diag-verdict.big.ok .dv-ico { background: var(--live); }
+.diag-verdict.big.warn .dv-ico { background: var(--warn); }
+.diag-verdict.big.bad .dv-ico { background: var(--bad); }
+.diag-verdict.big b { font-size: 16px; }
+.diag-verdict.big .dv-text { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.diag-verdict.big .btn { grid-column: 1 / -1; margin-top: 10px; }
+.diag-verdict.big { animation: dvIn .35s var(--e-out, ease-out); }
+@keyframes dvIn { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.diag-row { animation: rowIn .3s var(--e-out, ease-out) both; }
+@keyframes rowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.diag-ico { position: relative; width: 16px; height: 16px; margin-top: 1px; }
+.diag-row.ok .diag-ico::after, .diag-row.bad .diag-ico::after, .diag-row.warn .diag-ico::after {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font: 700 10px var(--display); color: var(--bg); }
+.diag-row.ok .diag-ico::after { content: "✓"; }
+.diag-row.bad .diag-ico::after { content: "✕"; }
+.diag-row.warn .diag-ico::after { content: "!"; }
+@media (prefers-reduced-motion: reduce) { .diag-verdict.big, .diag-row { animation: none; } }
+
+/* поддержка: действие и Telegram — одним рядом, компактно; Telegram — без сплошной заливки,
+   фирменным цветом (#2AABEE) только иконка, текст и лёгкая подложка */
+.sup-actions { display: flex; gap: 8px; align-items: center; }
+.sup-actions .btn.primary { flex: 1; }
+.sup-actions .btn.primary[hidden] { display: none; }
+.btn.tg-soft { flex: none; color: var(--tg); border-color: color-mix(in srgb, var(--tg) 35%, transparent);
+  background: color-mix(in srgb, var(--tg) 9%, transparent); }
+.btn.tg-soft:hover { background: color-mix(in srgb, var(--tg) 16%, transparent); border-color: var(--tg); }
+.btn.tg-soft svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+.sup-actions[hidden] { display: none; }
+.sup-active .sup-actions .btn.primary { flex: none; }
+.sup-closed .sup-actions { justify-content: center; }
+/* закреплённые правила режима (presetrules.js) */
+.rule.pin { width: 100%; text-align: left; border: 0; border-radius: 0; color: var(--ink); }
+.rule.pin + .rule.pin { border-top: 1px solid var(--line); }
+.rule.pin.tap { cursor: pointer; transition: background .2s; }
+.rule.pin.tap:hover { background: var(--panel-3); }
+.rule.pin .lock { flex: none; width: 14px; height: 14px; color: var(--dim); display: grid; }
+.rule.pin .lock svg { width: 14px; height: 14px; }
+.rule.pin .what { font-size: 13px; font-family: inherit; display: flex; flex-direction: column; gap: 1px; word-break: normal; }
+.rule.pin .what b { font-weight: 600; font-size: 13px; }
+.rule.pin .what small { font-size: 11.5px; color: var(--muted); }
+.rule.pin.last .what b { font-weight: 500; color: var(--muted); }
+.rule.pin .chev { margin-left: -4px; }
+#pin-q { width: 100%; margin: 10px 0 8px; }
+.pin-items { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.pin-items:empty { display: none; }
+.pin-item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 12px; font: 12px var(--mono);
+  background: var(--panel-2); word-break: break-all; }
+.pin-item + .pin-item { border-top: 1px solid var(--line); }
+.pin-item i { font-style: normal; font-size: 9.5px; color: var(--muted); letter-spacing: .06em; }
+
+/* вкладка «Маршрутизация» 2.1.3: одна карточка правил */
+#rules-card { display: flex; flex-direction: column; gap: 10px; }
+#rules-card > .cap, #rules-card .cap { margin: 0; }
+.rc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.linkbtn { border: 0; background: none; padding: 2px 0; color: var(--muted); font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: color .2s; }
+.linkbtn svg { width: 14px; height: 14px; }
+.linkbtn:hover { color: var(--acc-ink); }
+.linkbtn.danger:hover { color: var(--bad); }
+#custom-tools { display: flex; flex-direction: column; gap: 8px; }
+.cap.sub { margin-top: 4px !important; display: flex; align-items: center; gap: 6px; }
+.cap .cnt { font: 600 10px var(--mono); color: var(--acc-ink); }
+.cap .cnt:empty { display: none; }
+#custom-base button { padding: 6px 4px; font-size: 11.5px; }
+.rule .kind { font: 500 9.5px var(--mono); font-style: normal; color: var(--dim); letter-spacing: .04em; }
+.empty.small { padding: 10px; font-size: 12px; border: 1px dashed var(--line-2); border-radius: 12px; }
+.add-rule { display: inline-flex; justify-content: center; align-items: center; gap: 6px; padding: 9px 12px;
+  font-size: 13px; border-style: dashed; }
+.add-rule svg { width: 15px; height: 15px; }
+#preset-hint { margin: 0; font-size: 11.5px; }
+.rc-foot { display: flex; justify-content: space-between; gap: 10px; padding-top: 2px; }
+.rule-add { display: flex; flex-direction: column; gap: 10px; }
+.sw.mini { padding: 0; gap: 0; flex: none; }
+.sw.mini i { width: 30px; height: 18px; }
+.sw.mini i::after { width: 12px; height: 12px; top: 2px; left: 2px; }
+.sw.mini input:checked + i::after { transform: translateX(12px); }
+.rule.pin.off .what b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-2); }
+.rule.pin.off .vd { opacity: .35; }
+.gstrip { display: flex; align-items: center; margin-top: 3px; }
+.gstrip { gap: 3px; }
+.gstrip img { width: 17px; height: 17px; border-radius: 5px; background: var(--panel-3); object-fit: cover; }
+.gstrip em { font: 500 10.5px var(--mono); font-style: normal; color: var(--muted); margin-left: 4px; }
+.pin-item.game { align-items: center; justify-content: flex-start; gap: 10px; font-family: inherit; }
+.pin-item img { width: 26px; height: 26px; border-radius: 7px; flex: none; object-fit: cover; }
+.pin-item .tx { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pin-item.game .tx b { font-size: 13px; font-weight: 600; }
+.pin-item .tx b { font-weight: 400; }
+.pin-item .tx small { font: 10.5px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pin-item .excl { flex: none; border: 1px solid var(--line-2); background: none; border-radius: 999px; color: var(--muted);
+  font-size: 10.5px; padding: 2px 8px; cursor: pointer; font-family: inherit; }
+.pin-item .excl:hover { color: var(--acc-ink); border-color: var(--acc); }
+.pin-item i.own { color: var(--acc-ink); text-transform: none; letter-spacing: 0; font-family: inherit; font-size: 10.5px; flex: none; }

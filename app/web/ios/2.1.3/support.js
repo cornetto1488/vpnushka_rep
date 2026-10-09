@@ -71,7 +71,9 @@ function markSeen(t) {
 
 function paintSupportDot() {
   const n = supTickets.filter(unreadOf).length;
-  for (const id of ["sup-dot", "sup-dot-tb", "sup-dot-tab"]) if (el(id)) el(id).style.display = n ? "" : "none";
+  for (const id of ["sup-dot", "sup-dot-tb"]) if (el(id)) el(id).style.display = n ? "" : "none";
+  const tab = el("sup-dot-tab");            // на вкладке — число непрочитанных обращений
+  if (tab) { tab.textContent = n ? String(n) : ""; tab.style.display = n ? "" : "none"; }
   // подпись пункта «Поддержка» в настройках — сразу видно, что с обращением
   const sub = el("support-sub");
   if (sub) {
@@ -99,12 +101,21 @@ function supTab(name) {
 
 /* ── экраны: список, новое, обращение ─────────────────────────────────────── */
 
+const SUP_DEPTH = { home: 0, new: 1, thread: 1 };
 function supGo(screen) {
+  const back = SUP_DEPTH[screen] < SUP_DEPTH[supScreen];
+  const moved = screen !== supScreen;
   supScreen = screen;
   const ok = logged();
   el("sup-login").style.display = ok ? "none" : "";
   for (const s of ["home", "new", "thread"]) el("sup-" + s).hidden = !ok || s !== screen;
   if (!ok) return;
+  if (moved) {
+    const node = el("sup-" + screen);
+    node.classList.remove("slide-in", "slide-back");
+    void node.offsetWidth;                  // перезапуск анимации
+    node.classList.add(back ? "slide-back" : "slide-in");
+  }
   if (screen === "home") renderTickets();
   if (screen === "thread") renderThread();
   if (screen === "new") renderNew();
@@ -121,6 +132,7 @@ function renderTickets() {
   const note = el("sup-active");
   note.hidden = !a;
   el("sup-new-btn").hidden = !!a;
+  el("sup-new-btn").parentNode.hidden = !!a;   // ряд «Новое · Telegram» — Telegram тогда в карточке открытого
   if (a) {
     note.textContent = "";
     const b = document.createElement("b");
@@ -129,10 +141,15 @@ function renderTickets() {
     h.className = "hint";
     h.textContent = "Пока поддержка его не закрыла, пишите в него — второе открыть нельзя.";
     const go = document.createElement("button");
-    go.className = "btn primary wide";
-    go.textContent = "Перейти к обращению";
+    go.className = "btn primary small";
+    go.textContent = "Перейти к обращению →";
     go.addEventListener("click", () => openTicket(a.id));
-    note.append(b, h, go);
+    const row = document.createElement("div");
+    row.className = "sup-actions";
+    const tg = document.querySelector("#sup-home [data-tg]").cloneNode(true);
+    tg.addEventListener("click", () => invoke("open_url", { url: SUP_TG }).catch((e) => say(errText(e), true)));
+    row.append(go, tg);
+    note.append(b, h, row);
   }
   for (const t of supTickets) {
     const [label, tone] = supStatus(t);
@@ -191,15 +208,28 @@ function renderThread(pending) {
   list.textContent = "";
   const msgs = (t.messages || []).slice();
   if (pending) msgs.push({ id: "p", is_from_admin: false, message_text: pending, pending: true });
+  let prevAdmin = null;
   for (const m of msgs) {
     const b = document.createElement("div");
     b.className = "sup-msg " + (m.is_from_admin ? "out" : "in") + (m.pending ? " pending" : "");
-    if (m.is_from_admin) {
-      const who = document.createElement("b");
-      who.textContent = "Поддержка";
+    const body = document.createElement("div");
+    body.className = "sm-body";
+    // подпись с аватаром — только у первого ответа подряд, как в мессенджерах
+    if (m.is_from_admin && prevAdmin !== true) {
+      const who = document.createElement("div");
+      who.className = "sm-who";
+      const av = document.createElement("img");
+      av.src = "brand.png"; av.alt = ""; av.className = "sm-av";
+      const nm = document.createElement("b");
+      nm.textContent = "Поддержка ВПНушки";
+      who.append(av, nm);
       b.append(who);
     }
-    b.append(document.createTextNode(supVisible(m.message_text) || (m.has_media ? "[вложение — откройте в боте]" : "")));
+    prevAdmin = !!m.is_from_admin;
+    for (const it of supMedia(m)) body.append(it);
+    const text = supVisible(m.message_text);
+    if (text) body.append(document.createTextNode(text));
+    b.append(body);
     const tm = document.createElement("time");
     tm.textContent = (m.pending ? "отправляю…" : supTime(m.created_at))
       + (m.has_media && !m.is_from_admin && m.media_type === "document" ? " · 📎 журнал приложен" : "");
@@ -219,6 +249,42 @@ function renderThread(pending) {
   }
   const pane = el("view-support");
   if (pane && !pending) requestAnimationFrame(() => { pane.scrollTop = pane.scrollHeight; });
+}
+
+// Вложения: бот отдаёт подписанную ссылку (media_token живёт ограниченное
+// время, её даёт каждый свежий ответ /tickets/<id>). Фото — картинкой в
+// переписке (нажатие — во весь размер в браузере), остальное — ссылкой.
+const SUP_MEDIA = "https://cabinet.vpnushka.lol/api/cabinet/media/";
+function supMedia(m) {
+  const items = (m.media_items && m.media_items.length ? m.media_items
+    : m.has_media && m.media_file_id ? [{ type: m.media_type, file_id: m.media_file_id, token: m.media_token, caption: m.media_caption }] : []);
+  const out = [];
+  for (const it of items) {
+    if (!it.file_id || !it.token) continue;
+    const url = SUP_MEDIA + encodeURIComponent(it.file_id) + "?token=" + encodeURIComponent(it.token);
+    if (it.type === "photo") {
+      const img = document.createElement("img");
+      img.className = "sm-photo";
+      img.loading = "lazy";
+      img.alt = it.caption || "фото";
+      img.src = url;
+      img.addEventListener("click", () => invoke("open_url", { url }).catch(() => {}));
+      img.addEventListener("error", () => { img.replaceWith(supFileLink(url, "фото — открыть")); });
+      out.push(img);
+    } else if (!(it.type === "document" && !m.is_from_admin)) {   // свой журнал — подписью у времени
+      out.push(supFileLink(url, it.type === "video" ? "видео — открыть" : "файл — открыть"));
+    }
+    if (it.caption && it.type !== "photo") out.push(document.createTextNode(it.caption));
+  }
+  if (!out.length && m.has_media && m.is_from_admin) out.push(document.createTextNode("[вложение — откройте в боте]"));
+  return out;
+}
+function supFileLink(url, label) {
+  const a = document.createElement("button");
+  a.className = "sm-file";
+  a.textContent = "📎 " + label;
+  a.addEventListener("click", () => invoke("open_url", { url }).catch((e) => say(errText(e), true)));
+  return a;
 }
 
 function renderNew() {
@@ -448,7 +514,8 @@ document.querySelectorAll("#sup-cats [data-cat]").forEach((b) => on(b, "click", 
 }));
 document.querySelectorAll("[data-sup-new]").forEach((b) => on(b, "click", () => supNew()));
 document.querySelectorAll("[data-sup-home]").forEach((b) => on(b, "click", () => { supGo("home"); supRefresh(false); }));
-on(el("sup-tg"), "click", () => invoke("open_url", { url: SUP_TG }).catch((e) => say(errText(e), true)));
+document.querySelectorAll("[data-tg]").forEach((b) => on(b, "click", () =>
+  invoke("open_url", { url: SUP_TG }).catch((e) => say(errText(e), true))));
 on(el("sup-login-btn"), "click", () => show("account"));
 on(el("faq-open"), "click", () => { show("support"); supTab("faq"); });
 document.querySelectorAll("#sup-tabs [data-sup]").forEach((b) => on(b, "click", () => supTab(b.dataset.sup)));
