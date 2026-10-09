@@ -167,7 +167,7 @@
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
         <span class="tx">
           <b id="exp-title">Подписка заканчивается</b>
-          <span class="sub">продлите в кабинете — пара нажатий</span>
+          <span class="sub">нажмите, чтобы продлить, — пара нажатий</span>
         </span>
         <span class="chev">›</span>
       </button>
@@ -202,7 +202,7 @@
       <div class="seg sup-tabs" id="sup-tabs">
         <button data-sup="faq" class="on">Вопросы</button>
         <button data-sup="prices">Тарифы</button>
-        <button data-sup="chat">Чат<span id="sup-dot-tab" class="dot live" style="display:none"></span></button>
+        <button data-sup="chat">Обращения<span id="sup-dot-tab" class="sup-tabcount" style="display:none"></span></button>
       </div>
 
       <!-- частые вопросы: содержимое в faq.js -->
@@ -211,7 +211,7 @@
         <div class="card pad faq-more">
           <b>Не нашли ответ?</b>
           <span class="hint">Напишите нам — приложим сведения о подключении, чтобы разобраться быстрее.</span>
-          <button class="btn primary wide" data-sup-go="chat">Написать в поддержку</button>
+          <button class="btn primary wide" data-sup-new>Написать в поддержку</button>
         </div>
       </div>
 
@@ -237,26 +237,70 @@
         </div>
       </div>
 
+      <!-- обращения (тикеты бота): список → обращение → новое; support.js -->
       <div id="sup-chat" class="sup-pane" hidden>
-      <div id="sup-list" class="sup-list">
-        <div id="sup-empty" class="hint">Опишите, что случилось: какой сервер, что не открывается, с какого времени. Ответ придёт сюда, в бот и уведомлением.</div>
-      </div>
-      <div class="card sup-form">
-        <div id="sup-login" class="sup-login" style="display:none">
-          <div class="hint">Чтобы написать из приложения, войдите в кабинет — так поддержка сразу увидит вашу подписку. Или напишите в Telegram.</div>
-          <button id="sup-login-btn" class="btn wide">Войти в кабинет</button>
+        <div id="sup-login" class="card pad sup-login" style="display:none">
+          <b>Войдите, чтобы писать из приложения</b>
+          <div class="hint">Так поддержка сразу увидит вашу подписку, а ответы придут сюда, в бот и уведомлением.
+            Без входа — напишите в Telegram.</div>
+          <div class="sup-actions"><button id="sup-login-btn" class="btn primary small">Войти в кабинет</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
         </div>
-        <div id="sup-form-in" class="sup-form">
-          <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в поддержку…"></textarea>
-          <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
-            <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и последние строки журнала — так быстрее разобраться</span></span></label>
-          <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
-            <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: весь журнал за этот запуск — что делал движок, какие были ошибки</span></span></label>
-          <button id="sup-send" class="btn primary wide">Отправить</button>
-          <div id="sup-status" class="hint"></div>
+
+        <!-- список обращений -->
+        <div id="sup-home" class="sup-screen">
+          <div id="sup-active" class="card pad sup-active" hidden></div>
+          <div class="sup-actions"><button id="sup-new-btn" class="btn primary small" data-sup-new>+ Новое обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
+          <div class="sup-cap"><span>Мои обращения</span><span id="sup-count" class="hint"></span></div>
+          <div id="sup-tickets" class="sup-tickets"></div>
+          <div id="sup-tickets-empty" class="card pad hint" hidden>Обращений пока нет. Если что-то не работает —
+            создайте обращение: опишите, что случилось, и мы ответим, обычно в течение часа.</div>
         </div>
-        <button id="sup-tg" class="btn tg wide">Написать в Telegram @vpnushka_manager</button>
-      </div>
+
+        <!-- новое обращение -->
+        <div id="sup-new" class="sup-screen" hidden>
+          <button class="sup-back" data-sup-home>‹ Все обращения</button>
+          <div class="card pad sup-form">
+            <b class="sup-title">Новое обращение</b>
+            <div class="cap">Тема</div>
+            <div class="sup-cats" id="sup-cats">
+              <button data-cat="Не подключается VPN">Не подключается</button>
+              <button data-cat="Медленно работает">Медленно</button>
+              <button data-cat="Не открывается сайт или приложение">Не открывается сайт</button>
+              <button data-cat="Оплата и подписка">Оплата и подписка</button>
+              <button data-cat="Другой вопрос">Другое</button>
+            </div>
+            <textarea id="sup-new-text" maxlength="3000" placeholder="Опишите, что случилось: какой сервер, что не открывается, с какого времени…"></textarea>
+            <label class="sw"><input type="checkbox" id="sup-diag" checked /><i></i>
+              <span class="lbl"><b>Приложить сведения</b><span id="sup-diag-sub">версия, система, сервер и подписка — так быстрее разобраться</span></span></label>
+            <label class="sw" id="sup-log-row" style="display:none"><input type="checkbox" id="sup-log" checked /><i></i>
+              <span class="lbl"><b>Приложить журнал подключения</b><span>файлом: что делал движок и какие были ошибки</span></span></label>
+            <div class="sup-actions"><button id="sup-create" class="btn primary small">Отправить обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
+            <div id="sup-new-status" class="hint"></div>
+          </div>
+        </div>
+
+        <!-- одно обращение -->
+        <div id="sup-thread" class="sup-screen" hidden>
+          <button class="sup-back" data-sup-home>‹ Все обращения</button>
+          <div class="card pad sup-head">
+            <div class="sup-head-top"><b id="sup-t-title"></b><span id="sup-t-status" class="sup-badge"></span></div>
+            <span id="sup-t-meta" class="hint"></span>
+          </div>
+          <div id="sup-list" class="sup-list"></div>
+          <div id="sup-reply" class="card pad sup-form">
+            <textarea id="sup-text" maxlength="3000" placeholder="Сообщение в это обращение…"></textarea>
+            <label class="sw"><input type="checkbox" id="sup-r-diag" /><i></i>
+              <span class="lbl"><b>Приложить сведения</b><span>версия, сервер, подписка и последние строки журнала</span></span></label>
+            <div class="sup-actions"><button id="sup-send" class="btn primary small">Отправить</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
+            <div id="sup-status" class="hint"></div>
+          </div>
+          <div id="sup-closed" class="card pad sup-closed" hidden>
+            <b>Обращение закрыто</b>
+            <span class="hint">Писать в закрытое обращение нельзя. Если вопрос остался или появился новый — создайте новое обращение.</span>
+            <div class="sup-actions"><button class="btn primary small" data-sup-new>+ Новое обращение</button><button class="btn tg-soft small" data-tg title="Написать в Telegram @vpnushka_manager"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.4 4.3 18.3 19c-.2 1-.8 1.3-1.7.8l-4.7-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.8 8.8-7.9c.4-.3-.1-.5-.6-.2L6.2 13 1.6 11.6c-1-.3-1-1 .2-1.5L20 3.1c.8-.3 1.6.2 1.4 1.2Z"/></svg>Telegram</button></div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -667,20 +711,54 @@
           <button data-verdict="direct">Мимо VPN</button>
           <button data-verdict="block">Блокировать</button>
         </div>
+        <div class="hint" id="rule-apps-hint" style="display:none">На телефоне приложения управляются целиком:
+          «Мимо VPN» — приложение идёт напрямую; «Через VPN» — в тоннеле будут ТОЛЬКО отмеченные приложения,
+          все остальные пойдут мимо.</div>
         <button id="rule-add" class="btn primary wide">Добавить правило</button>
         <div class="cap" style="margin-top:2px">Готовые наборы</div>
         <div class="presets" id="presets"></div>
         <div id="rule-list" class="rules"></div>
-        <button id="rule-clear" class="btn wide">Очистить все правила</button>
+        <div class="row2">
+          <button id="rules-share" class="btn wide">Поделиться / импорт</button>
+          <button id="rule-clear" class="btn wide">Очистить все правила</button>
+        </div>
         <div class="hint">Правила и «всё остальное» применяются при следующем подключении.
           «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
           (например <code>Telegram.exe</code>).</div>
       </div>
+          <div class="card pad">
+        <div class="cap">Куда пойдёт сайт?</div>
+        <div class="addrow">
+          <input id="route-check-in" type="text" spellcheck="false" placeholder="youtube.com" />
+          <button id="route-check-btn" class="btn">Проверить</button>
+        </div>
+        <div id="route-check-out" class="hint">Покажет, идёт ли сайт через VPN или напрямую в текущем режиме, и почему.</div>
+      </div>
     </section>
 
-    <!-- ── НАСТРОЙКИ ─────────────────────────────────────────────────────── -->
+    <!-- ── НАСТРОЙКИ (перед ним — проверка сайта, см. ниже) ─────────────────────────────────────────────────────── -->
     <section id="view-more" class="view">
       <header class="vhead"><span class="eyebrow">Приложение и туннель</span><h1>Настройки</h1></header>
+
+      <span class="label section">Помощь</span>
+      <div class="group navlist">
+        <button class="row tap" id="support">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
+          <span class="tx"><b>Поддержка</b><span id="support-sub" class="sub">обращения в поддержку, вопросы и тарифы</span></span>
+          <span id="sup-dot" class="dot live" style="display:none"></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" id="diag-open">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+          <span class="tx"><b>Проверить связь</b><span class="sub">что не так и что делать — за полминуты</span></span>
+          <span class="chev"></span>
+        </button>
+        <button class="row tap" id="faq-open">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"/></svg></span>
+          <span class="tx"><b>Частые вопросы и тарифы</b><span class="sub">ответы на всё основное и цены</span></span>
+          <span class="chev"></span>
+        </button>
+      </div>
 
       <span class="label section">Подключение</span>
       <div class="card pad">
@@ -708,15 +786,10 @@
           <span id="nav-ofx-dot" class="dot"></span>
           <span class="chev"></span>
         </button>
-        <button class="row tap" id="support">
-          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/><path d="M9.6 9.6a2.4 2.4 0 1 1 3.2 2.3c-.5.2-.8.6-.8 1.1v.5"/><path d="M12 16.2h.01"/></svg></span>
-          <span class="tx"><b>Поддержка и вопросы</b><span class="sub">частые вопросы, тарифы, чат с нами</span></span>
-          <span id="sup-dot" class="dot live" style="display:none"></span>
-          <span class="chev"></span>
-        </button>
       </div>
 
-      <span class="label section">Оформление</span>
+
+      <span class="label section">Приложение</span>
       <div class="card pad">
         <div class="seg" id="theme-seg">
           <button data-theme-pick="dark">Тёмная</button>
@@ -724,7 +797,6 @@
         </div>
       </div>
 
-      <span class="label section autohide-label">Приложение</span>
       <div class="card pad autohide">
         <div class="stack">
         <label class="sw ios-only"><input type="checkbox" id="keep-alive" /><i></i>
@@ -742,7 +814,7 @@
         </div>
       </div>
 
-      <span class="label section">Подписка, туннель, журнал</span>
+      <span class="label section">Подписка и для продвинутых</span>
       <details class="card pad fold" id="sub-fold">
         <summary>Подписка</summary>
         <div class="stack">
@@ -933,6 +1005,39 @@
     </div>
   </div>
 
+  <!-- проверка связи (diag.js) --------------------------------------------- -->
+  <div id="sheet-diag" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Проверка связи<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div id="diag-verdict" class="diag-verdict">Проверяю…</div>
+        <div id="diag-list" class="diag-list"></div>
+        <div class="row2">
+          <button id="diag-run" class="btn small wide">Проверить ещё раз</button>
+          <button id="diag-send" class="btn small wide">Написать в поддержку</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- обмен своими правилами (rulestools.js) ------------------------------- -->
+  <div id="sheet-rules-io" class="sheet">
+    <div class="scrim" data-close></div>
+    <div class="panel">
+      <h2>Набор правил<span class="grow"></span><button data-close>×</button></h2>
+      <div class="scroll">
+        <div class="cap">Ваши правила — одной строкой</div>
+        <textarea id="rules-io-out" class="rules-io" readonly spellcheck="false"></textarea>
+        <button id="rules-io-copy" class="btn wide">Скопировать</button>
+        <div class="cap" style="margin-top:10px">Добавить чужой набор</div>
+        <textarea id="rules-io-in" class="rules-io" spellcheck="false" placeholder="вставьте строку vpnushka-rules:…"></textarea>
+        <button id="rules-io-import" class="btn primary wide">Добавить правила</button>
+        <div id="rules-io-msg" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- места для устройств заняты (devices.js) ------------------------------ -->
   <div id="sheet-devices" class="sheet">
     <div class="scrim" data-close></div>
@@ -1023,5 +1128,7 @@
   <script src="invite.js"></script>
   <script src="support.js"></script>
   <script src="faq.js"></script>
+  <script src="diag.js"></script>
+  <script src="rulestools.js"></script>
 </body>
 </html>

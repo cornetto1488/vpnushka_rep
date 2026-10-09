@@ -33,7 +33,7 @@
   --live: #3be08c;
   --warn: #ffb547;
   --bad: #ff6b5e;
-  --tg: #3aa6e8;
+  --tg: #2aabee;
   --s-down: #f45a24;
   --s-up: #4f87f0;
   --scrim: rgba(0, 0, 0, .62);
@@ -67,7 +67,7 @@ html[data-theme="light"] {
   --live: #0d6e3f;
   --warn: #874e05;
   --bad: #ab2c22;
-  --tg: #1f8fd0;
+  --tg: #229ed9;
   --s-down: #e2480f;
   --s-up: #2f63d6;
   --scrim: rgba(20, 16, 12, .42);
@@ -1344,3 +1344,123 @@ html.pc .auth-gate .ag-side { display: flex; }
 .rules-off .btn { flex: none; }
 #rules-card.dim > :not(.rules-off):not(.cap:first-child) { opacity: .6; }
 #rules-card.dim > :not(.rules-off):not(.cap:first-child):hover { opacity: 1; }
+
+/* проверка связи (diag.js) */
+.diag-verdict { font-size: 14px; line-height: 1.45; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--panel-2, var(--panel)); margin-bottom: 10px; }
+.diag-verdict.ok { border-color: var(--live); }
+.diag-verdict.warn { border-color: var(--warn); }
+.diag-verdict.bad { border-color: var(--bad); }
+.diag-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.diag-row { display: flex; gap: 10px; align-items: flex-start; }
+.diag-row .diag-tx { display: flex; flex-direction: column; min-width: 0; }
+.diag-row .diag-tx b { font-size: 13px; }
+.diag-row .diag-tx .sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.diag-ico { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: var(--line-2); }
+.diag-row.wait .diag-ico { animation: blink .9s ease-in-out infinite; background: var(--acc); }
+.diag-row.ok .diag-ico { background: var(--live); }
+.diag-row.warn .diag-ico { background: var(--warn); }
+.diag-row.bad .diag-ico { background: var(--bad); }
+/* обмен правилами */
+.rules-io { width: 100%; min-height: 70px; resize: vertical; font: 11px var(--mono); color: var(--ink);
+  background: var(--panel-3); border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin: 6px 0; }
+.hint.ok { color: var(--live); }
+.hint.warn { color: var(--warn); }
+
+/* ── обращения в поддержку (2.1) ──────────────────────────────────────── */
+.sup-screen { display: flex; flex-direction: column; gap: 10px; }
+.sup-screen[hidden] { display: none; }
+.sup-cap { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 2px 0;
+  font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sup-tickets { display: flex; flex-direction: column; gap: 8px; }
+.sup-ticket { position: relative; display: flex; flex-direction: column; gap: 4px; text-align: left; width: 100%;
+  padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel);
+  color: var(--ink); font: inherit; cursor: pointer; transition: border-color .15s, transform .15s; }
+.sup-ticket:hover { border-color: var(--line-2); }
+.sup-ticket:active { transform: scale(.99); }
+.sup-ticket.unread { border-color: var(--acc); }
+.sup-ticket.closed { opacity: .72; }
+.sup-ticket .st-top { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.sup-ticket .st-top b { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sup-ticket .st-last { font-size: 12.5px; color: var(--muted); line-height: 1.4; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.sup-ticket .st-meta { font: 11px var(--mono); color: var(--muted); }
+.sup-ticket .st-dot { position: absolute; top: 10px; right: 10px; width: 8px; height: 8px; }
+.sup-ticket.unread .st-top { padding-right: 14px; }
+.sup-badge { flex: none; font: 600 10.5px var(--mono); letter-spacing: .04em; padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--line-2); color: var(--muted); white-space: nowrap; }
+.sup-badge.wait { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.sup-badge.live { color: var(--live); border-color: color-mix(in srgb, var(--live) 50%, transparent);
+  background: color-mix(in srgb, var(--live) 12%, transparent); }
+.sup-badge.off { color: var(--muted); }
+.sup-active { display: flex; flex-direction: column; gap: 8px; border-color: var(--acc); background: var(--acc-soft); }
+.sup-active[hidden] { display: none; }
+.sup-back { align-self: flex-start; background: none; border: 0; color: var(--acc-ink); font: 600 13px var(--display);
+  padding: 4px 2px; cursor: pointer; }
+.sup-head { display: flex; flex-direction: column; gap: 4px; }
+.sup-head-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sup-head-top b { font-size: 16px; }
+.sup-title { font-size: 16px; }
+.sup-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.sup-cats button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent;
+  color: var(--ink); font: 500 12.5px var(--display); cursor: pointer; }
+.sup-cats button.on { border-color: var(--acc); background: var(--acc-soft); color: var(--acc-ink); }
+.sup-closed { display: flex; flex-direction: column; gap: 8px; text-align: center; }
+.sup-closed[hidden], #sup-reply[hidden], #sup-new-btn[hidden] { display: none; }
+#sup-tickets-empty[hidden] { display: none; }
+
+/* 2.1.1: счётчик на вкладке, подпись поддержки, вложения, переходы */
+.sup-tabcount { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+  margin-left: 6px; padding: 0 5px; border-radius: 999px; background: var(--acc); color: var(--on-acc, #fff);
+  font: 700 10.5px var(--mono); vertical-align: 1px; }
+.sup-msg .sm-who { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.sup-msg .sm-who b { display: inline; margin: 0; font-size: 12px; color: var(--acc-ink); }
+.sup-msg .sm-av { width: 20px; height: 20px; border-radius: 6px; flex: none; }
+.sup-msg .sm-body { display: flex; flex-direction: column; gap: 6px; white-space: pre-wrap; }
+.sup-msg .sm-photo { display: block; max-width: 100%; max-height: 260px; border-radius: 10px; object-fit: cover;
+  cursor: zoom-in; background: var(--panel-3); }
+.sup-msg .sm-file { align-self: flex-start; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line-2);
+  background: transparent; color: var(--ink); font: 500 12.5px var(--display); cursor: pointer; }
+.sup-msg .sm-file:hover { border-color: var(--acc); }
+.sup-screen.slide-in { animation: supIn .28s var(--e-out, ease-out); }
+.sup-screen.slide-back { animation: supBack .28s var(--e-out, ease-out); }
+@keyframes supIn { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes supBack { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sup-screen.slide-in, .sup-screen.slide-back { animation: none; } }
+
+/* «Проверить связь» 2.1.1: итог крупной карточкой с одним действием, строки — по очереди */
+.diag-verdict.big { display: grid; grid-template-columns: 44px 1fr; column-gap: 12px; row-gap: 4px; align-items: center;
+  padding: 16px; border-width: 1.5px; }
+.diag-verdict.big .dv-ico { grid-row: span 2; width: 44px; height: 44px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font: 700 22px var(--display); color: var(--bg); background: var(--muted); }
+.diag-verdict.big.ok .dv-ico { background: var(--live); }
+.diag-verdict.big.warn .dv-ico { background: var(--warn); }
+.diag-verdict.big.bad .dv-ico { background: var(--bad); }
+.diag-verdict.big b { font-size: 16px; }
+.diag-verdict.big .dv-text { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.diag-verdict.big .btn { grid-column: 1 / -1; margin-top: 10px; }
+.diag-verdict.big { animation: dvIn .35s var(--e-out, ease-out); }
+@keyframes dvIn { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+.diag-row { animation: rowIn .3s var(--e-out, ease-out) both; }
+@keyframes rowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.diag-ico { position: relative; width: 16px; height: 16px; margin-top: 1px; }
+.diag-row.ok .diag-ico::after, .diag-row.bad .diag-ico::after, .diag-row.warn .diag-ico::after {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font: 700 10px var(--display); color: var(--bg); }
+.diag-row.ok .diag-ico::after { content: "✓"; }
+.diag-row.bad .diag-ico::after { content: "✕"; }
+.diag-row.warn .diag-ico::after { content: "!"; }
+@media (prefers-reduced-motion: reduce) { .diag-verdict.big, .diag-row { animation: none; } }
+
+/* поддержка: действие и Telegram — одним рядом, компактно; Telegram — без сплошной заливки,
+   фирменным цветом (#2AABEE) только иконка, текст и лёгкая подложка */
+.sup-actions { display: flex; gap: 8px; align-items: center; }
+.sup-actions .btn.primary { flex: 1; }
+.sup-actions .btn.primary[hidden] { display: none; }
+.btn.tg-soft { flex: none; color: var(--tg); border-color: color-mix(in srgb, var(--tg) 35%, transparent);
+  background: color-mix(in srgb, var(--tg) 9%, transparent); }
+.btn.tg-soft:hover { background: color-mix(in srgb, var(--tg) 16%, transparent); border-color: var(--tg); }
+.btn.tg-soft svg { width: 15px; height: 15px; fill: currentColor; flex: none; }
+.sup-actions[hidden] { display: none; }
+.sup-active .sup-actions .btn.primary { flex: none; }
+.sup-closed .sup-actions { justify-content: center; }

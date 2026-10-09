@@ -128,6 +128,9 @@ function paintFlag(node, name) {
 const cleanName = (n) =>
   (n || "").replace(/^[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D\s]+/u, "").trim() || (n || "");
 // канал OpenFlux; в панели он называется «📱 Мобильные операторы»
+// селектор DNS через тоннель (connect/dnsroute.go): при ручном выборе — тот же
+// сервер, при автовыборе — свой автовыбор без XHTTP
+const DNS_SEL = "🌐 DNS", DNS_AUTO = "🌐 DNS · авто";
 const isOfx = (n) => /openflux|мобильн/i.test(n || "");
 const byName = (n) => servers.find((s) => s.name === n);
 
@@ -904,6 +907,11 @@ async function switchSelector(name) {
   const put = () => clash(path, { method: "PUT", headers: { "content-type": "application/json" },
                                   body: JSON.stringify({ name }) });
   await put();
+  // DNS — за тем же сервером (или за своим автовыбором, если выбрана группа)
+  const p = await clash("/proxies/" + encodeURIComponent(name)).catch(() => null);
+  const dnsTo = p && /urltest|fallback|selector/i.test(p.type || "") ? DNS_AUTO : name;
+  await clash("/proxies/" + encodeURIComponent(DNS_SEL), { method: "PUT", headers: { "content-type": "application/json" },
+                                                         body: JSON.stringify({ name: dnsTo }) }).catch(() => {});
   const now = await clash(path).then((p) => p && p.now).catch(() => name);
   if (now !== name) {
     await put();
@@ -925,11 +933,13 @@ async function loadInfo() {
 let subError = "";
 
 async function loadServers() {
-  if (state === "on") {
+  // и во время подключения: движок уже отвечает, а без живого списка не было
+  // имени селектора — выбор сервера сразу после подключения не переключал
+  if (state !== "off") {
     try {
       const data = await clash("/proxies");
       const all = Object.values(data.proxies || {});
-      const sel = all.find((p) => p.type === "Selector");
+      const sel = all.find((p) => p.type === "Selector" && p.name !== DNS_SEL && p.name !== "GLOBAL");
       if (sel) {
         selectorName = sel.name;
         liveType = {};
@@ -1262,7 +1272,13 @@ function renderRules() {
   el("rule-pick").style.display = ruleKind === "apps" ? "" : "none";
   // На Android приложение можно только вывести из VPN (список VpnService):
   // ядро не видит, от какой программы пришло соединение.
-  el("rule-verdict").style.display = IS_ANDROID && ruleKind === "apps" ? "none" : "";
+  // iPhone приложения не различает вовсе; Android — только целиком: мимо VPN
+  // или «только эти через VPN» (VpnService), блокировать приложение нельзя
+  const phoneApps = IS_ANDROID && ruleKind === "apps";
+  el("rule-verdict").style.display = phoneApps && T.platform !== "android" ? "none" : "";
+  el("rule-verdict").querySelector('[data-verdict="block"]').style.display = phoneApps ? "none" : "";
+  if (phoneApps && ruleVerdict === "block") el("rule-verdict").querySelector('[data-verdict="direct"]').click();
+  el("rule-apps-hint").style.display = phoneApps && T.platform === "android" ? "" : "none";
 }
 
 // Ядро сравнивает домены в punycode (так их несут DNS и TLS): «.рф» как есть
@@ -1307,7 +1323,8 @@ on(el("rule-add"), "click", () => {
     const i = list.indexOf(v);
     if (i >= 0) list.splice(i, 1);          // one verdict per entry
   }
-  bucket(ruleKind, IS_ANDROID && ruleKind === "apps" ? "direct" : ruleVerdict).push(v);
+  bucket(ruleKind, IS_ANDROID && ruleKind === "apps" && (T.platform !== "android" || ruleVerdict === "block")
+    ? "direct" : ruleVerdict).push(v);
   el("rule-input").value = "";
   saveRouting(true);
 });
@@ -1407,8 +1424,9 @@ document.querySelectorAll("#route-mode button").forEach((b) => on(b, "click", ()
 // Android выводит приложения из тоннеля сам: в «Игровом» — игры, в «Своих
 // правилах» — то, что человек отправил «мимо VPN».
 function phoneAppsDiffer(a, b) {
+  const apps = routing().apps || {};
   const set = (m) => m === "Games" ? "games"
-    : m === "Custom" && (((routing().apps || {}).direct) || []).length ? "custom" : "";
+    : m === "Custom" && ((apps.direct || []).length || (apps.proxy || []).length) ? "custom" : "";
   return set(a) !== set(b);
 }
 
@@ -2043,9 +2061,18 @@ async function syncStatusOnce() {
 
 // вернулись в приложение — сразу сверяемся с тоннелем, не ждём таймера
 // (на телефоне таймеры в фоне стоят, а тоннель мог подняться или упасть)
-document.addEventListener("visibilitychange", () => {
+document.addEventListener("visibilitychange", async () => {
   if (document.hidden) return;
   syncStatus();
+  // режим могли сменить с виджета (Android)
+  try {
+    const p = await invoke("get_prefs");
+    if (p && p.routeMode && p.routeMode !== prefs.routeMode) {
+      prefs = p;
+      tweaks = await invoke("get_tweaks").catch(() => tweaks);
+      paintRouteMode();
+    }
+  } catch (_) {}
   if (state === "on") resolveExit();
 });
 
@@ -2143,7 +2170,7 @@ if (listen) {
     loadSubInfo();
   }
   const link = await invoke("take_deep_link").catch(() => null);
-  if (link) await importLink(link);
+  if (link) await openLink(link);
   // ни аккаунта, ни подписки — сразу экран входа (auth.js); acc грузит account.js
   setTimeout(() => maybeOpenAuth(), 300);
   syncStatus();
@@ -2168,6 +2195,20 @@ function linkToSub(link) {
   if (!/^https?:/i.test(s)) { try { s = decodeURIComponent(s); } catch (_) {} }
   s = s.replace(/^(https?):\/*/i, "$1://");   // браузеры иногда съедают косую
   return /^https?:\/\/[^/]+\/./i.test(s) ? s : "";
+}
+
+// vpnushka://renew — кнопка «Продлить» в уведомлении о подписке
+async function openLink(link) {
+  if (/^vpnushka:\/\/renew/i.test(link)) { goRenew(); return; }
+  return importLink(link);
+}
+
+function goRenew() {
+  show("account");
+  setTimeout(() => {
+    const b = el("acc-renew");
+    if (b && b.offsetParent) b.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 400);
 }
 
 async function importLink(link) {
@@ -2200,7 +2241,7 @@ async function importLink(link) {
 }
 
 if (listen) {
-  listen("ofx-deep-link", () => invoke("take_deep_link").then((u) => u && importLink(u)).catch(() => {}));
+  listen("ofx-deep-link", () => invoke("take_deep_link").then((u) => u && openLink(u)).catch(() => {}));
 }
 
 /* ── напоминания об окончании подписки ───────────────────────────────────── */
@@ -2213,7 +2254,7 @@ const DAY = 86400000;
 function remindExpiry(s) {
   const card = el("exp-card");
   const end = s && s.expire ? s.expire * 1000 : 0;
-  if (!end || guestActive()) {
+  if (!end || (typeof guestActive === "function" && guestActive())) {
     card.style.display = "none";
     if (IS_ANDROID) invoke("schedule_reminders", { items: [] }).catch(() => {});
     return;
@@ -2229,7 +2270,7 @@ function remindExpiry(s) {
     : "Израсходовано " + Math.floor(pct) + "% трафика";
   remindTraffic(s, pct);
   const items = [
-    { id: 1, at: end - 3 * DAY, body: "Подписка закончится через 3 дня. Продлить — в приложении, раздел «Кабинет»." },
+    { id: 1, at: end - 3 * DAY, body: "Подписка закончится через 3 дня — продлите, чтобы VPN не отключился." },
     { id: 2, at: end - DAY, body: "Подписка закончится завтра — продлите, чтобы VPN не отключился." },
     { id: 3, at: end, body: "Подписка закончилась. Продлить можно в приложении, раздел «Кабинет»." },
   ];
@@ -2259,7 +2300,7 @@ function remindTraffic(s, pct) {
     : "Израсходовано " + step + "% трафика (" + bytes(s.used) + " из " + bytes(s.total) + ")." }).catch(() => {});
 }
 
-on(el("exp-card"), "click", () => show("account"));
+on(el("exp-card"), "click", goRenew);
 
 /* ── Auto: перевыбор сервера и переподключение ───────────────────────────── */
 // Только при автовыборе (urltest): там клиент волен сменить сервер сам. Если
@@ -2268,7 +2309,7 @@ on(el("exp-card"), "click", () => show("account"));
 const PROBE = "&url=" + encodeURIComponent("https://www.gstatic.com/generate_204");
 
 function autoSelected() {
-  return !!current && !guestActive()
+  return !!current && !(typeof guestActive === "function" && guestActive())
     && (liveType[current] === "URLTest" || (info[current] || {}).type === "urltest");
 }
 
