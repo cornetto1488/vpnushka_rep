@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="fonts/fonts.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="android.css" />
-  <link rel="stylesheet" href="ios.css" />
 </head>
 <body>
   <!-- плёночное зерно и сетка на фоне — как на apodmarchuk.ru -->
@@ -119,9 +118,10 @@
           <div class="ctl">
             <span class="label">Маршрут</span>
             <div class="seg pill" id="home-routes">
-              <button data-pick-route="global">Всё</button>
-              <button data-pick-route="rule">Пресет</button>
-              <button data-pick-route="direct">Напрямую</button>
+              <button data-pick-route="global" title="Всё через VPN">Всё</button>
+              <button data-pick-route="games" title="Игровой: игры напрямую, остальное через VPN">Игры</button>
+              <button data-pick-route="rule" title="Фирменный пресет">Пресет</button>
+              <button data-pick-route="custom" title="Свои правила">Свои</button>
             </div>
           </div>
         </div>
@@ -614,24 +614,42 @@
         <div class="modes" id="route-mode">
           <button data-rmode="global">
             <b>Всё через VPN<i>рекомендуем</i></b>
-            <span>в тоннеле весь трафик, кроме ваших исключений «мимо VPN»</span>
+            <span>в тоннеле весь трафик устройства</span>
+          </button>
+          <button data-rmode="games">
+            <b>Игровой</b>
+            <span>всё через VPN, а игры — напрямую, с пингом как без VPN.
+                  Заблокированное в России всё равно идёт через VPN</span>
           </button>
           <button data-rmode="rule">
             <b>Фирменный пресет</b>
             <span>через VPN — зарубежные сервисы и мессенджеры по нашим спискам,
                   остальное напрямую и на полной скорости</span>
           </button>
+          <button data-rmode="custom">
+            <b>Свои правила</b>
+            <span>вы сами решаете, что идёт через VPN, а что мимо, — настраивается ниже</span>
+          </button>
           <button data-rmode="direct">
             <b>Всё напрямую</b>
-            <span>тоннель поднят, но трафик идёт мимо: через VPN пойдёт только то,
-                  что вы добавите в исключения</span>
+            <span>тоннель поднят, но весь трафик идёт мимо него</span>
           </button>
         </div>
         <div class="hint" id="route-base"></div>
       </div>
 
-      <div class="card pad">
-        <div class="cap">Исключения</div>
+      <div class="card pad" id="rules-card">
+        <div class="cap">Свои правила</div>
+        <div class="rules-off" id="rules-off">
+          <span>Правила ниже работают только в режиме «Свои правила». Добавите правило — режим включится сам.</span>
+          <button id="rules-enable" class="btn small">Включить</button>
+        </div>
+        <div class="cap" style="margin-top:2px">Всё, что не в правилах, идёт</div>
+        <div class="seg small" id="custom-base">
+          <button data-base="proxy">через VPN</button>
+          <button data-base="rule">по пресету</button>
+          <button data-base="direct">напрямую</button>
+        </div>
         <div class="hint" id="rule-hint"></div>
         <div class="seg small" id="rule-kind">
           <button data-kind="apps" class="on">Программы</button>
@@ -654,8 +672,8 @@
         <div class="presets" id="presets"></div>
         <div id="rule-list" class="rules"></div>
         <button id="rule-clear" class="btn wide">Очистить все правила</button>
-        <div class="hint">Исключения сильнее режима и фирменного пресета. Применяются при следующем
-          подключении. «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
+        <div class="hint">Правила и «всё остальное» применяются при следующем подключении.
+          «Программы» работают в режиме TUN: сопоставляется имя исполняемого файла
           (например <code>Telegram.exe</code>).</div>
       </div>
     </section>
@@ -993,7 +1011,7 @@
 
   <script src="policies.js"></script>
   <script src="consent.js"></script>
-  <script src="ios.js"></script>
+  <script src="android.js"></script>
   <script src="app.js"></script>
   <script src="devices.js"></script>
   <script src="account.js"></script>

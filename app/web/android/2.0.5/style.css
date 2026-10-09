@@ -1336,3 +1336,11 @@ html.pc .auth-gate .ag-side { display: flex; }
 .lg-opt b { font-size: 14px; }
 .lg-opt span { font-size: 12.5px; color: var(--muted); }
 .lg-opt.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, var(--panel-2)); }
+
+/* «Свои правила» вне своего режима: видно, но приглушено, и сказано почему */
+.rules-off { display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  font-size: 12.5px; line-height: 1.45; color: var(--ink); background: var(--acc-soft);
+  border: 1px solid var(--acc); border-radius: 12px; padding: 10px 12px; }
+.rules-off .btn { flex: none; }
+#rules-card.dim > :not(.rules-off):not(.cap:first-child) { opacity: .6; }
+#rules-card.dim > :not(.rules-off):not(.cap:first-child):hover { opacity: 1; }
