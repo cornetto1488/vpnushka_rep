@@ -1338,12 +1338,6 @@ html.pc .auth-gate .ag-side { display: flex; }
 .lg-opt.on { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 12%, var(--panel-2)); }
 
 /* «Свои правила» вне своего режима: видно, но приглушено, и сказано почему */
-.rules-off { display: flex; align-items: center; gap: 10px; justify-content: space-between;
-  font-size: 12.5px; line-height: 1.45; color: var(--ink); background: var(--acc-soft);
-  border: 1px solid var(--acc); border-radius: 12px; padding: 10px 12px; }
-.rules-off .btn { flex: none; }
-#rules-card.dim > :not(.rules-off):not(.cap:first-child) { opacity: .6; }
-#rules-card.dim > :not(.rules-off):not(.cap:first-child):hover { opacity: 1; }
 
 /* проверка связи (diag.js) */
 .diag-verdict { font-size: 14px; line-height: 1.45; padding: 12px 14px; border-radius: 12px;
@@ -1464,3 +1458,65 @@ html.pc .auth-gate .ag-side { display: flex; }
 .sup-actions[hidden] { display: none; }
 .sup-active .sup-actions .btn.primary { flex: none; }
 .sup-closed .sup-actions { justify-content: center; }
+/* закреплённые правила режима (presetrules.js) */
+.rule.pin { width: 100%; text-align: left; border: 0; border-radius: 0; color: var(--ink); }
+.rule.pin + .rule.pin { border-top: 1px solid var(--line); }
+.rule.pin.tap { cursor: pointer; transition: background .2s; }
+.rule.pin.tap:hover { background: var(--panel-3); }
+.rule.pin .lock { flex: none; width: 14px; height: 14px; color: var(--dim); display: grid; }
+.rule.pin .lock svg { width: 14px; height: 14px; }
+.rule.pin .what { font-size: 13px; font-family: inherit; display: flex; flex-direction: column; gap: 1px; word-break: normal; }
+.rule.pin .what b { font-weight: 600; font-size: 13px; }
+.rule.pin .what small { font-size: 11.5px; color: var(--muted); }
+.rule.pin.last .what b { font-weight: 500; color: var(--muted); }
+.rule.pin .chev { margin-left: -4px; }
+#pin-q { width: 100%; margin: 10px 0 8px; }
+.pin-items { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.pin-items:empty { display: none; }
+.pin-item { display: flex; justify-content: space-between; gap: 8px; padding: 7px 12px; font: 12px var(--mono);
+  background: var(--panel-2); word-break: break-all; }
+.pin-item + .pin-item { border-top: 1px solid var(--line); }
+.pin-item i { font-style: normal; font-size: 9.5px; color: var(--muted); letter-spacing: .06em; }
+
+/* вкладка «Маршрутизация» 2.1.3: одна карточка правил */
+#rules-card { display: flex; flex-direction: column; gap: 10px; }
+#rules-card > .cap, #rules-card .cap { margin: 0; }
+.rc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.linkbtn { border: 0; background: none; padding: 2px 0; color: var(--muted); font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer; transition: color .2s; }
+.linkbtn svg { width: 14px; height: 14px; }
+.linkbtn:hover { color: var(--acc-ink); }
+.linkbtn.danger:hover { color: var(--bad); }
+#custom-tools { display: flex; flex-direction: column; gap: 8px; }
+.cap.sub { margin-top: 4px !important; display: flex; align-items: center; gap: 6px; }
+.cap .cnt { font: 600 10px var(--mono); color: var(--acc-ink); }
+.cap .cnt:empty { display: none; }
+#custom-base button { padding: 6px 4px; font-size: 11.5px; }
+.rule .kind { font: 500 9.5px var(--mono); font-style: normal; color: var(--dim); letter-spacing: .04em; }
+.empty.small { padding: 10px; font-size: 12px; border: 1px dashed var(--line-2); border-radius: 12px; }
+.add-rule { display: inline-flex; justify-content: center; align-items: center; gap: 6px; padding: 9px 12px;
+  font-size: 13px; border-style: dashed; }
+.add-rule svg { width: 15px; height: 15px; }
+#preset-hint { margin: 0; font-size: 11.5px; }
+.rc-foot { display: flex; justify-content: space-between; gap: 10px; padding-top: 2px; }
+.rule-add { display: flex; flex-direction: column; gap: 10px; }
+.sw.mini { padding: 0; gap: 0; flex: none; }
+.sw.mini i { width: 30px; height: 18px; }
+.sw.mini i::after { width: 12px; height: 12px; top: 2px; left: 2px; }
+.sw.mini input:checked + i::after { transform: translateX(12px); }
+.rule.pin.off .what b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-2); }
+.rule.pin.off .vd { opacity: .35; }
+.gstrip { display: flex; align-items: center; margin-top: 3px; }
+.gstrip { gap: 3px; }
+.gstrip img { width: 17px; height: 17px; border-radius: 5px; background: var(--panel-3); object-fit: cover; }
+.gstrip em { font: 500 10.5px var(--mono); font-style: normal; color: var(--muted); margin-left: 4px; }
+.pin-item.game { align-items: center; justify-content: flex-start; gap: 10px; font-family: inherit; }
+.pin-item img { width: 26px; height: 26px; border-radius: 7px; flex: none; object-fit: cover; }
+.pin-item .tx { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pin-item.game .tx b { font-size: 13px; font-weight: 600; }
+.pin-item .tx b { font-weight: 400; }
+.pin-item .tx small { font: 10.5px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pin-item .excl { flex: none; border: 1px solid var(--line-2); background: none; border-radius: 999px; color: var(--muted);
+  font-size: 10.5px; padding: 2px 8px; cursor: pointer; font-family: inherit; }
+.pin-item .excl:hover { color: var(--acc-ink); border-color: var(--acc); }
+.pin-item i.own { color: var(--acc-ink); text-transform: none; letter-spacing: 0; font-family: inherit; font-size: 10.5px; flex: none; }

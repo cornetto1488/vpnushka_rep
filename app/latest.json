@@ -1,11 +1,11 @@
 {
-  "version": "2.1.3",
-  "notes": "Маршрутизация стала проще: одна карточка правил вместо трёх. «Свои правила» теперь можно собрать на основе любого режима — «Игрового» или фирменного пресета — и выключить в нём лишнее (например, TikTok) или исключить отдельный сайт или игру. У игр появились иконки.",
-  "pub_date": "2026-10-09T16:11:08Z",
+  "version": "2.1.4",
+  "notes": "Автовыбор: «Германия · Мобильный» включается раньше «Мобильных операторов», а они — только в крайнем случае. Починен сервер «Германия · Мобильный». Auto теперь первым в списке.",
+  "pub_date": "2026-10-20T13:30:39Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093by9GRGUyeUNXVmRRSkhhTWQrMk0rK0F6VXE0cm5Hc2NUOFUzSFo3ekVQYmRLamtubWNJUVROeXgyQTVXbFlSSWRuSitUd09jVFF3c3RvVEJpcUJpM3dzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNTYxODI1CWZpbGU6VlBOVVNIS0FfMi4xLjNfeDY0LXNldHVwLmV4ZQphc0p3eDVIaE9qemRGL1R4UHl4WkxPZjhmNTlOa1FMWUx3RGl6Ui9WNzBkaUlFOVN4NkRFbDd3YUx3d3h6aWIzNjFYbk9jbml6TkY1ZkxMMjVsMGRDdz09Cg==",
-      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.3/VPNUSHKA_2.1.3_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSaFFyS3Vya093bzAxWVZVSkU3TVY4MlZLRmNRa0VnRjVtaGJnRGkvY1ZWQ3ZXYm9UWmdjSDRPRHM1aHZhanZiSWk0UjZOdExBcFFaZndFcldMclhiYkJpK3N2WFZvdWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNTAxOTEzCWZpbGU6VlBOVVNIS0FfMi4xLjRfeDY0LXNldHVwLmV4ZQpRVG45ZzFLOXNpWTZsM1hpbThnSGgvNEVtR3RYcEpNM3gwVC9ycndnU0dwWG1NcnZCb2ZWZkhTRVd1YmVSWXVKTThnd3czMzdHOThPNjV0MERhdVFEUT09Cg==",
+      "url": "https://github.com/cornetto1488/vpnushka_rep/releases/download/v2.1.4/VPNUSHKA_2.1.4_x64-setup.exe"
     }
   }
 }

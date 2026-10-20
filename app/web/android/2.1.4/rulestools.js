@@ -19,7 +19,7 @@ function b64urlDecode(s) {
 
 function exportRules() {
   const r = routing();
-  const out = { v: 1, base: customBase(), routing: {} };
+  const out = { v: 1, base: customBase(), off: tweaks.customOff || [], routing: {} };
   for (const k of RULE_KINDS) {
     for (const v of RULE_VERDICTS) {
       const list = ((r[k] || {})[v] || []).filter(Boolean);
@@ -52,8 +52,9 @@ function parseRules(text) {
       }
     }
   }
-  if (!n) throw new Error("в наборе нет ни одного правила");
-  return { routing: clean, base: CUSTOM_BASES[d.base] ? d.base : null, count: n };
+  if (!n && !d.base) throw new Error("в наборе нет ни одного правила");
+  const off = Array.isArray(d.off) ? d.off.filter((k) => typeof k === "string" && k.length < 40).slice(0, 40) : null;
+  return { routing: clean, base: CUSTOM_BASES[d.base] ? d.base : null, off, count: n };
 }
 
 async function importRules(text) {
@@ -72,6 +73,7 @@ async function importRules(text) {
     }
   }
   if (p.base && p.base !== tweaks.customBase) await saveTweaks({ customBase: p.base });
+  if (p.off) await saveTweaks({ customOff: p.off });
   await saveRouting(true);
   paintRouteMode();
   return p.count;

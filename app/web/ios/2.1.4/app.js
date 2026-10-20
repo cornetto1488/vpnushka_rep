@@ -34,8 +34,9 @@ let selectorName = null;    // live sing-box selector tag, when connected
 let since = 0;              // connected-at, for the session timer
 let liveType = {};          // name -> Clash API type (URLTest = автовыбор), when connected
 let autoRetry = 0, autoTimer = null, watchFails = 0;   // Auto: попытки переподключения
+let ofxFallback = false;    // Auto ушёл на «Мобильные операторы» как на крайний случай
 let stats = { down: 0, up: 0, dRate: 0, uRate: 0, at: 0 };
-let ruleKind = "apps";
+let ruleKind = "domains";
 let ruleVerdict = "proxy";
 
 const VERDICTS = { proxy: "Через VPN", direct: "Мимо VPN", block: "Блокировать" };
@@ -43,15 +44,16 @@ const ROUTE_MODES = { Global: "Всё через VPN", Games: "Игровой", 
                       Direct: "Всё напрямую", Custom: "Свои правила" };
 const ROUTE_ORDER = ["Global", "Games", "Rule", "Custom", "Direct"];
 // «Свои правила»: что делать со всем, что правилами не задано (tweaks.customBase)
-const CUSTOM_BASES = { proxy: "через VPN", rule: "по фирменному пресету", direct: "напрямую" };
+const CUSTOM_BASES = { proxy: "через VPN", games: "как в «Игровом»", rule: "по фирменному пресету", direct: "напрямую" };
 // из какого режима пришли — такое «остальное» и оставляем, чтобы ничего не поменялось
-const BASE_OF_MODE = { Global: "proxy", Games: "proxy", Rule: "rule", Direct: "direct" };
+const BASE_OF_MODE = { Global: "proxy", Games: "games", Rule: "rule", Direct: "direct" };
 // Подсказка над правилами: сами правила действуют только в «Своих правилах».
 const RULE_HINTS = {
   proxy:  "Остальное идёт через VPN — добавляйте сюда то, что должно ходить МИМО: банк-клиент, госуслуги, игры.",
   rule:   "Остальное — по фирменному пресету. Добавляйте то, что он не покрывает: «через VPN» — если сайт "
         + "не открывается, «мимо VPN» — если наоборот тормозит.",
   direct: "Остальное идёт напрямую — добавляйте сюда то, что должно ходить ЧЕРЕЗ VPN.",
+  games:  "Основа — «Игровой»: игры напрямую, остальное через VPN.",
 };
 // Человеческие имена списков, которые отдаёт подписка.
 const SET_NAMES = {
@@ -131,7 +133,10 @@ const cleanName = (n) =>
 // селектор DNS через тоннель (connect/dnsroute.go): при ручном выборе — тот же
 // сервер, при автовыборе — свой автовыбор без XHTTP
 const DNS_SEL = "🌐 DNS", DNS_AUTO = "🌐 DNS · авто";
-const isOfx = (n) => /openflux|мобильн/i.test(n || "");
+// Ловить надо именно канал: «🇩🇪📱 Германия · Мобильный» — обычный XHTTP-сервер
+// через CDN (переключается на ходу, стоит в Auto), раньше /мобильн/ путал их.
+const isOfx = (n) => /openflux|мобильные операторы/i.test(n || "");
+const isMobileCdn = (n) => !isOfx(n) && /мобильн|📱/i.test(n || "");
 const byName = (n) => servers.find((s) => s.name === n);
 
 async function clash(path, opts) {
@@ -427,7 +432,8 @@ function tick() {
     const ss = String(t % 60).padStart(2, "0");
     el("m-time").textContent = (hh ? hh + ":" : "") + mm + ":" + ss;
     sub.textContent = linkBad ? "сервер не отвечает — подождите или выберите другой"
-      : liveExitAuto ? "автовыбор: самый быстрый сейчас" : "сервер выбран вручную";
+      : liveExitAuto ? "автовыбор: самый быстрый сейчас"
+      : ofxFallback ? "автовыбор: обычные серверы молчат — через мобильных операторов" : "сервер выбран вручную";
   } else if (state === "connecting") {
     sub.textContent = (probeMsg || "пара секунд") + " · нажмите, чтобы отменить";
     el("m-time").textContent = "00:00";
@@ -459,6 +465,7 @@ async function toggleConnection() {
     const cancel = state === "connecting";
     connGen++;
     autoRetry = 0;
+    leaveOfxFallback();
     setState("off");
     await stopEngine();
     if (cancel) say(CANCELLED);
@@ -530,12 +537,14 @@ async function toggleConnection() {
     live();
     if ((await invoke("get_status").catch(() => "on")) === "off") throw new Error(
       (await invoke("last_error").catch(() => "")) || "соединение оборвалось при подключении");
+    if (!ok && await ofxLastResort(gen)) return;
     linkBad = !ok;
     setState("on");
     if (!ok) { linkBad = false; setLinkBad(true); }
     showEgress();
   } catch (e) {
     if (gen !== connGen) return;        // отменили — кнопка уже всё сделала
+    leaveOfxFallback();
     setState("off");
     if (!handleDeviceLimit(errText(e), true)) say(errText(e), true);   // devices.js
     loadLog();
@@ -757,11 +766,12 @@ function sortedServers() {
   } else if (mode === "name") {
     list = list.slice().sort((a, b) => cleanName(a.name).localeCompare(cleanName(b.name), "ru"));
   }
-  // Favourites first, then the OpenFlux channel — it is the whole point of this
-  // client and the panel buries it at the end of the subscription.
+  // Избранное, затем автовыбор, обычные серверы, мобильный CDN-сервер и в самом
+  // конце «Мобильные операторы» — в том же порядке Auto к ним и прибегает.
   const fav = prefs.favorites || [];
-  const weight = (s) => (fav.includes(s.name) ? 2 : isOfx(s.name) ? 1 : 0);
-  return list.slice().sort((a, b) => weight(b) - weight(a));
+  const rank = (s) => (fav.includes(s.name) ? 0 : (info[s.name] || {}).type === "urltest" ? 1
+    : isOfx(s.name) ? 4 : isMobileCdn(s.name) ? 3 : 2);
+  return list.slice().sort((a, b) => rank(a) - rank(b));
 }
 
 // Строки списка живут между перерисовками: renderList правит их на месте и
@@ -837,8 +847,9 @@ function renderList() {
     setText(r.nm, cleanName(s.name));
     setText(r.ds, (info[s.name] || {}).desc || "");
     const type = (info[s.name] || {}).type;
-    setClass(r.badge, "badge" + (isOfx(s.name) ? " ofx" : ""));
-    setText(r.badge, isOfx(s.name) ? "мобильный" : type === "urltest" ? "авто"
+    const mob = isOfx(s.name) || isMobileCdn(s.name);
+    setClass(r.badge, "badge" + (mob ? " ofx" : ""));
+    setText(r.badge, mob ? "мобильный" : type === "urltest" ? "авто"
       : (info[s.name] || {}).proto || type || "");
     const [label, tone] = delayLabel(s);
     setClass(r.ms, "ms" + (tone ? " " + tone : ""));
@@ -859,6 +870,7 @@ function toggleFav(name) {
 
 async function choose(name) {
   const before = current;
+  ofxFallback = false;
   current = name;
   savePrefs({ server: name });
   paintCurrent();
@@ -1226,52 +1238,62 @@ async function applyPreset(p) {
   }
   ruleKind = p.kind;
   document.querySelectorAll("#rule-kind button").forEach((x) => x.classList.toggle("on", x.dataset.kind === p.kind));
+  sheet("sheet-rule-add", false);
   await saveRouting(true);
   say("добавлено правил: " + added + " (" + VERDICTS[p.verdict].toLowerCase() + ")");
 }
 
+const KIND_TAGS = { apps: "прил.", domains: "сайт", ips: "IP" };
 function renderRules() {
   const box = el("rule-list");
   box.textContent = "";
   let n = 0;
-  for (const verdict of ["proxy", "direct", "block"]) {
-    for (const item of bucket(ruleKind, verdict)) {
-      n++;
-      const row = document.createElement("div");
-      row.className = "rule";
-      const what = document.createElement("span");
-      what.className = "what";
-      what.textContent = ruleKind === "domains" ? showDomain(item) : item;
-      const vd = document.createElement("span");
-      vd.className = "vd " + verdict;
-      vd.textContent = VERDICTS[verdict];
-      const del = document.createElement("button");
-      del.className = "del";
-      del.textContent = "×";
-      del.title = "Удалить правило";
-      del.addEventListener("click", () => {
-        const list = bucket(ruleKind, verdict);
-        list.splice(list.indexOf(item), 1);
-        saveRouting();
-      });
-      row.append(what, vd, del);
-      box.append(row);
+  for (const kind of ["domains", "apps", "ips"]) {
+    for (const verdict of ["proxy", "direct", "block"]) {
+      for (const item of bucket(kind, verdict)) {
+        n++;
+        const row = document.createElement("div");
+        row.className = "rule";
+        const what = document.createElement("span");
+        what.className = "what";
+        what.textContent = kind === "domains" ? showDomain(item) : item;
+        const tag = document.createElement("i");
+        tag.className = "kind";
+        tag.textContent = KIND_TAGS[kind];
+        const vd = document.createElement("span");
+        vd.className = "vd " + verdict;
+        vd.textContent = VERDICTS[verdict];
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "×";
+        del.title = "Удалить правило";
+        del.addEventListener("click", () => {
+          const list = bucket(kind, verdict);
+          list.splice(list.indexOf(item), 1);
+          saveRouting();
+        });
+        row.append(what, tag, vd, del);
+        box.append(row);
+      }
     }
   }
+  el("rule-count").textContent = n ? String(n) : "";
   if (!n) {
     const d = document.createElement("div");
-    d.className = "empty";
-    d.textContent = ruleKind === "apps"
-      ? "Правил нет — все программы идут по общим настройкам"
-      : "Правил нет";
+    d.className = "empty small";
+    d.textContent = "Пока пусто — всё идёт по основе";
     box.append(d);
   }
+  paintRuleAdd();
+}
+
+// окно «Новое правило»: поле и вердикты под выбранный вид
+function paintRuleAdd() {
   el("rule-input").placeholder =
     ruleKind === "apps" ? (IS_ANDROID ? "выберите приложение справа" : "chrome.exe")
       : ruleKind === "domains" ? "youtube.com" : "192.168.1.0/24";
   el("rule-pick").style.display = ruleKind === "apps" ? "" : "none";
-  // На Android приложение можно только вывести из VPN (список VpnService):
-  // ядро не видит, от какой программы пришло соединение.
+  el("rule-exe-hint").style.display = ruleKind === "apps" && !IS_ANDROID ? "" : "none";
   // iPhone приложения не различает вовсе; Android — только целиком: мимо VPN
   // или «только эти через VPN» (VpnService), блокировать приложение нельзя
   const phoneApps = IS_ANDROID && ruleKind === "apps";
@@ -1280,6 +1302,11 @@ function renderRules() {
   if (phoneApps && ruleVerdict === "block") el("rule-verdict").querySelector('[data-verdict="direct"]').click();
   el("rule-apps-hint").style.display = phoneApps && T.platform === "android" ? "" : "none";
 }
+on(el("rule-new"), "click", () => {
+  paintRuleAdd();
+  sheet("sheet-rule-add", true);
+  setTimeout(() => el("rule-input").focus(), 250);
+});
 
 // Ядро сравнивает домены в punycode (так их несут DNS и TLS): «.рф» как есть
 // не совпал бы ни с чем.
@@ -1326,6 +1353,7 @@ on(el("rule-add"), "click", () => {
   bucket(ruleKind, IS_ANDROID && ruleKind === "apps" && (T.platform !== "android" || ruleVerdict === "block")
     ? "direct" : ruleVerdict).push(v);
   el("rule-input").value = "";
+  sheet("sheet-rule-add", false);
   saveRouting(true);
 });
 on(el("rule-clear"), "click", async () => {
@@ -1340,7 +1368,7 @@ on(el("rule-input"), "keydown", (e) => { if (e.key === "Enter") el("rule-add").c
 document.querySelectorAll("#rule-kind button").forEach((b) => on(b, "click", () => {
   document.querySelectorAll("#rule-kind button").forEach((x) => x.classList.toggle("on", x === b));
   ruleKind = b.dataset.kind;
-  renderRules();
+  paintRuleAdd();
 }));
 document.querySelectorAll("#rule-verdict button").forEach((b) => on(b, "click", () => {
   document.querySelectorAll("#rule-verdict button").forEach((x) => x.classList.toggle("on", x === b));
@@ -1425,8 +1453,10 @@ document.querySelectorAll("#route-mode button").forEach((b) => on(b, "click", ()
 // правилах» — то, что человек отправил «мимо VPN».
 function phoneAppsDiffer(a, b) {
   const apps = routing().apps || {};
+  const gamesBase = tweaks.customBase === "games" && !(tweaks.customOff || []).includes("gameApps");
   const set = (m) => m === "Games" ? "games"
-    : m === "Custom" && ((apps.direct || []).length || (apps.proxy || []).length) ? "custom" : "";
+    : m === "Custom" ? ((apps.direct || []).length || (apps.proxy || []).length ? "custom" : "")
+                       + (gamesBase && !(apps.proxy || []).length ? "games" : "") : "";
   return set(a) !== set(b);
 }
 
@@ -1440,9 +1470,10 @@ function paintRouteMode() {
   document.querySelectorAll("#route-mode button").forEach((b) => b.classList.toggle("on", modeOf(b.dataset.rmode) === mode));
   const base = customBase();
   document.querySelectorAll("#custom-base button").forEach((b) => b.classList.toggle("on", b.dataset.base === base));
-  el("rule-hint").textContent = RULE_HINTS[base];
-  el("rules-off").style.display = mode === "Custom" ? "none" : "";
-  el("rules-card").classList.toggle("dim", mode !== "Custom");
+  const custom = mode === "Custom";
+  el("custom-tools").style.display = custom ? "" : "none";
+  el("rules-foot").style.display = custom ? "" : "none";
+  el("rules-enable").style.display = custom ? "none" : "";
   el("nav-route").textContent = ROUTE_MODES[mode] || "";
   paintBaseline();
   paintHomeControls();
@@ -1485,18 +1516,10 @@ document.querySelectorAll("[data-pick-route]").forEach((b) => on(b, "click", () 
   if (t) t.click();
 }));
 
+// Что маршрутизирует сама подписка — теперь видно списком закреплённых
+// правил режима (presetrules.js), а не строкой описания.
 function paintBaseline() {
-  const box = el("route-base");
-  if (!baseline) { box.textContent = ""; return; }
-  const via = setNames(baseline.viaServer);
-  const direct = setNames(baseline.direct);
-  if (!via && !direct) { box.textContent = ""; return; }
-  const mode = prefs.routeMode || "Global";
-  box.textContent = mode === "Rule"
-    ? "Фирменный пресет: через VPN — " + (via || "—") + "; напрямую — " + (direct || "—") + "."
-    : mode === "Games" ? "Игровой: игры (Steam, Epic, Riot, Battle.net, Wargaming, мобильные и др.) напрямую, "
-      + "остальное через VPN; " + (via || "заблокированное") + " — через VPN всегда."
-    : "В фирменном пресете через VPN шли бы: " + (via || "—") + ".";
+  if (typeof renderPresetRules === "function") renderPresetRules();
 }
 
 /* ── preferences & advanced settings ─────────────────────────────────────── */
@@ -1597,6 +1620,7 @@ function paintAdblock() {
 on(el("adblock"), "change", async (e) => {
   const v = e.target.checked;
   await saveTweaks({ adblock: v });
+  paintBaseline();
   if (state === "on") {
     say(v ? "включаю блокировку рекламы — переподключаюсь…" : "выключаю блокировку рекламы — переподключаюсь…");
     await toggleConnection();
@@ -2051,6 +2075,7 @@ async function syncStatusOnce() {
     showEgress();
   }
   if (s === "off" && state === "on") {
+    leaveOfxFallback();
     setState("off");
     await loadServers();
     // Android перезапускает сам (VpnSvc), а на iPhone тоннель гасит и сам
@@ -2313,9 +2338,40 @@ function autoSelected() {
     && (liveType[current] === "URLTest" || (info[current] || {}).type === "urltest");
 }
 
+// Крайний случай автовыбора — «Мобильные операторы» (OpenFlux). До него Auto
+// сам перебирает обычные серверы и последним — мобильный CDN-сервер
+// («🇩🇪📱 Германия · Мобильный», в urltest он в конце); канал включаем, только
+// если и так рабочего выхода нет. Выбор человека (prefs.server = Auto) не
+// трогаем: выключил — и следующее подключение снова начинается с Auto.
+// (флаг ofxFallback объявлен наверху, рядом с autoRetry)
+
+function leaveOfxFallback() {
+  if (!ofxFallback) return;
+  ofxFallback = false;
+  if (prefs.server) current = prefs.server;
+}
+
+async function ofxLastResort(gen) {
+  const ofx = servers.find((s) => isOfx(s.name));
+  if (!ofx || ofxFallback || !autoSelected() || (gen && gen !== connGen)) return false;
+  say("обычные серверы и мобильный CDN не отвечают — подключаю «Мобильные операторы»", true);
+  connGen++;
+  setState("off");
+  await stopEngine();
+  ofxFallback = true;
+  current = ofx.name;
+  paintCurrent(); renderList();
+  await toggleConnection();
+  return true;
+}
+
 function autoReconnect(why) {
   if (!autoSelected() || autoTimer) return;
-  if (autoRetry >= 3) { say("не удалось восстановить соединение — подключитесь вручную", true); return; }
+  if (autoRetry >= 3) {
+    if (servers.some((s) => isOfx(s.name))) { autoRetry = 0; ofxLastResort(); return; }
+    say("не удалось восстановить соединение — подключитесь вручную", true);
+    return;
+  }
   const wait = [3, 10, 30][autoRetry++];
   say(why + " — Auto переподключится через " + wait + " с");
   autoTimer = setTimeout(async () => {
@@ -2337,14 +2393,13 @@ async function autoWatch() {
     if (r && r.delay > 0) { watchFails = 0; autoRetry = 0; return; }
   } catch (_) { /* no answer through it */ }
   watchFails++;
-  // На «Мобильные операторы» сами не уводим: сервер выбирает человек — Auto
-  // только перемеряет свои серверы и при необходимости переподключается.
-  if (watchFails === 1) {
+  // Перемер группы сам уводит на живой сервер — при белых списках это
+  // мобильный CDN-сервер (он в Auto). Не помогло — переподключение, и только
+  // если и тогда выхода нет, крайний случай — «Мобильные операторы».
+  if (watchFails < 3) {
     say("сервер не отвечает — Auto ищет другой");
     clash("/group/" + g + "/delay?timeout=6000" + PROBE).then(loadServers).catch(() => {});
-  } else if (watchFails === 2 && servers.some((s) => isOfx(s.name))) {
-    say("обычные серверы не отвечают — если вы в мобильной сети с ограничениями, выберите «Мобильные операторы» в списке серверов", true);
-  } else if (watchFails >= 3) {
+  } else {
     watchFails = 0;
     setState("off");
     await invoke("disconnect").catch(() => {});
